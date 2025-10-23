@@ -1,0 +1,34 @@
+name: Wire Generation Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'backend/services/**/cmd/**/wire.go'
+      - 'backend/services/**/cmd/**/wire_gen.go'
+      - '.github/workflows/wire.yml'
+      - 'backend/Makefile'
+      - 'backend/configs/wire-options.env'
+
+permissions:
+  contents: read
+
+jobs:
+  wire-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.0'
+
+      - name: Install wire_server
+        run: go install github.com/google/wire/cmd/wire@latest
+
+      - name: Check Wire generation
+        working-directory: ./backend
+        run: |
+          make wire-check

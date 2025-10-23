@@ -1,0 +1,22 @@
+run:
+  timeout: 5m
+  tests: true
+  go: '1.24.0'
+
+linters:
+  enable:
+    - gofmt
+    - govet
+    - errcheck
+    - staticcheck
+    - gosimple
+    - ineffassign
+    - unused
+    - typecheck
+
+issues:
+  exclude-dirs:
+    - internal/swagger
+    - gen
+  max-issues-per-linter: 0
+  max-same-issues: 0

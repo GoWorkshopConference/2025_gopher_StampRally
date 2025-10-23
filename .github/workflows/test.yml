@@ -1,0 +1,102 @@
+name: Test
+
+on:
+  workflow_run:
+    workflows: ["Build", "Mock Generation Check"]
+    types: [completed]
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect changed services
+        id: set-matrix
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_EVENT_PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          # Get all services
+          ALL_SERVICES=$(find backend/services -maxdepth 1 -type d -not -path backend/services | sed 's|backend/services/||' | sort)
+          echo "All services: $ALL_SERVICES"
+
+          # Determine base and head SHA based on event type
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              BASE_SHA="$GITHUB_EVENT_PULL_REQUEST_BASE_SHA"
+              HEAD_SHA="$GITHUB_EVENT_PULL_REQUEST_HEAD_SHA"
+          else
+              BASE_SHA="$GITHUB_EVENT_BEFORE"
+              HEAD_SHA="$GITHUB_SHA"
+          fi
+
+          # Get changed files
+          if [ -n "$BASE_SHA" ] && [ -n "$HEAD_SHA" ]; then
+              CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+          else
+              CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git ls-files)
+          fi
+
+          # Build matrix of changed services
+          CHANGED_SERVICES=""
+          for service in $ALL_SERVICES; do
+              if echo "$CHANGED_FILES" | grep -E "^backend/services/$service/" > /dev/null; then
+                  if [ -z "$CHANGED_SERVICES" ]; then
+                      CHANGED_SERVICES="\"$service\""
+                  else
+                      CHANGED_SERVICES="$CHANGED_SERVICES,\"$service\""
+                  fi
+                  echo "Service $service will be tested"
+              fi
+          done
+
+          # Output matrix
+          if [ -z "$CHANGED_SERVICES" ]; then
+              MATRIX='{"service":[]}'
+          else
+              MATRIX="{\"service\":[$CHANGED_SERVICES]}"
+          fi
+
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "Final matrix: $MATRIX"
+
+  test-services:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.matrix != '{"service":[]}' && (github.event_name == 'pull_request' || github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.0'
+          cache: false
+
+      - name: Run tests for ${{ matrix.service }}
+        working-directory: backend
+        run: |
+          # テストを実行
+          go test -v ./services/${{ matrix.service }}/...
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop test-mysql || true

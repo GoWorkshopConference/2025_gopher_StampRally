@@ -1,0 +1,45 @@
+name: lint
+
+on:
+  workflow_run:
+    workflows: ["Wire Generation Check", "Mock Generation Check", "Swagger Generation Check"]
+    types: [completed]
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'backend/services/**'
+      - 'backend/configs/**'
+      - '.github/workflows/lint.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint-services:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      matrix:
+        service: [gopher-stamp-crud]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.0'
+          cache: false
+      - name: Load lint config
+        run: source backend/configs/lint-options.env
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+          sh -s -- -b $(go env GOPATH)/bin $GOLANGCI_LINT_VERSION
+      - name: Lint ${{ matrix.service }} service
+        run: |
+          cd backend
+          go work sync || true
+          golangci-lint run \
+            --timeout=5m \
+            --config=${LINT_CONFIG_PATH} \
+            --skip-dirs '(?i)internal/swagger|^gen($|/)' \
+            ./services/${{ matrix.service }}/...
