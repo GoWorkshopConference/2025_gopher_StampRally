@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./services/gopher-stamp-crud
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=gopher
+      - DB_PASSWORD=stamprallypass
+      - DB_NAME=stamprally_db
+    restart: on-failure
+    networks:
+      - stamprally-network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: stamprally_db
+      MYSQL_USER: gopher
+      MYSQL_PASSWORD: stamprallypass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - stamprally-network
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  mysql-data:
+
+networks:
+  stamprally-network:
+    driver: bridge

@@ -1,0 +1,33 @@
+name: Swagger Generation Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'backend/api/swagger/**'
+      - 'backend/services/**'
+      - '.github/workflows/swagger.yml'
+      - 'backend/Makefile'
+      - 'backend/configs/swagger-options.env'
+
+permissions:
+  contents: read
+
+jobs:
+  swagger-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.0'
+
+      - name: Install oapi-codegen
+        run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+
+      - name: Check Swagger generation
+        working-directory: ./backend
+        run: |
+          make swagger-check
