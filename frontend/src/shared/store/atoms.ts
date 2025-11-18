@@ -1,218 +1,128 @@
-import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
-import { UserProfile } from "../types/user";
-import { MY_PROFILE_ID } from "../constants";
+import {atom} from "jotai";
+import {atomWithStorage} from "jotai/utils";
+import {UserProfile} from "../types/user";
+import {MY_PROFILE_ID} from "../constants";
+import type {Stamp as APIStamp, User} from "../api/types";
 
-export interface Stamp {
-  id: number;
-  name: string;
-  time: string;
-  isCollected: boolean;
+// UI用のStamp型（API型を拡張）
+export interface Stamp extends Omit<APIStamp, 'created_at' | 'updated_at'> {
+    isCollected: boolean;
 }
 
+// UI用のParticipant型
 export interface Participant {
-  id: number;
-  name: string;
-  completedCount: number;
-  totalCount: number;
-  profileImageUrl?: string;
-  isMine?: boolean;
+    id: number;
+    name: string;
+    completedCount: number;
+    totalCount: number;
+    profileImageUrl?: string;
+    isMine?: boolean;
+    twitter_id?: string;
 }
 
+// UI用のParticipantDetailData型
 export interface ParticipantDetailData {
-  id: number;
-  name: string;
-  affiliation: string;
-  interests: string;
-  twitterId: string;
-  stamps: Stamp[];
+    id: number;
+    name: string;
+    affiliation: string;
+    interests: string;
+    twitterId: string;
+    stamps: Stamp[];
 }
 
-export const mockParticipants: Participant[] = [
-  { id: 1, name: "田中 太郎", completedCount: 6, totalCount: 6 },
-  { id: 2, name: "佐藤 花子", completedCount: 5, totalCount: 6 },
-  { id: 3, name: "鈴木 一郎", completedCount: 4, totalCount: 6 },
-  { id: 4, name: "高橋 美咲", completedCount: 6, totalCount: 6 },
-  { id: 5, name: "伊藤 健太", completedCount: 3, totalCount: 6 },
-  { id: 6, name: "渡辺 さくら", completedCount: 5, totalCount: 6 },
-  { id: 7, name: "山本 大輔", completedCount: 2, totalCount: 6 },
-  { id: 8, name: "中村 あい", completedCount: 6, totalCount: 6 },
-];
-
-export const mockParticipantsDetail: ParticipantDetailData[] = [
-  {
-    id: 1,
-    name: "田中 太郎",
-    affiliation: "株式会社テックイノベーション",
-    interests: "機械学習を使った業務効率化について学びたい",
-    twitterId: "tanaka_taro",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: true },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: true },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: true },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: true },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-  {
-    id: 2,
-    name: "佐藤 花子",
-    affiliation: "デザインスタジオ サクラ",
-    interests: "ユーザビリティテストの実践方法",
-    twitterId: "sato_hanako",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: true },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: false },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: true },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: true },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-  {
-    id: 3,
-    name: "鈴木 一郎",
-    affiliation: "フリーランス エンジニア",
-    interests: "最新のフロントエンド技術トレンド",
-    twitterId: "suzuki_ichiro",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: false },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: true },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: false },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: true },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-  {
-    id: 4,
-    name: "高橋 美咲",
-    affiliation: "ミライ大学 情報工学部",
-    interests: "チーム開発でのコミュニケーション術",
-    twitterId: "takahashi_misaki",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: true },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: true },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: true },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: true },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-  {
-    id: 5,
-    name: "伊藤 健太",
-    affiliation: "スタートアップ株式会社",
-    interests: "プロダクト開発のスピードアップ",
-    twitterId: "ito_kenta",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: false },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: false },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: true },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: false },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-  {
-    id: 6,
-    name: "渡辺 さくら",
-    affiliation: "クリエイティブエージェンシー BLOOM",
-    interests: "データドリブンなデザイン手法",
-    twitterId: "watanabe_sakura",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: true },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: true },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: true },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: false },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-  {
-    id: 7,
-    name: "山本 大輔",
-    affiliation: "グローバル商社 IT部門",
-    interests: "ノーコード・ローコード開発",
-    twitterId: "yamamoto_daisuke",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: false },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: true },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: false },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: false },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: true },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: false },
-    ],
-  },
-  {
-    id: 8,
-    name: "中村 あい",
-    affiliation: "ヘルステック企業 開発部",
-    interests: "アクセシビリティの向上方法",
-    twitterId: "nakamura_ai",
-    stamps: [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: true },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: true },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: true },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: true },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: true },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: true },
-    ],
-  },
-];
 
 // localStorageと同期するユーザープロフィールatom
 export const userProfileAtom = atomWithStorage<UserProfile | null>(
-  "gopher_stamp_rally_user_profile",
-  null
+    "gopher_stamp_rally_user_profile",
+    null
 );
 
-// スタンプのatom（userProfileから派生）
-export const stampsAtom = atom<Stamp[], [Stamp[]], void>(
-  (get) => {
-    const profile = get(userProfileAtom);
-    if (profile) {
-      return profile.stamps;
-    }
-    // デフォルトのスタンプ
-    return [
-      { id: 1, name: "プログラミング入門ワークショップ", time: "10:00-11:30", isCollected: false },
-      { id: 2, name: "デザイン思考体験セミナー", time: "11:45-13:15", isCollected: false },
-      { id: 3, name: "Web開発基礎講座", time: "13:30-15:00", isCollected: false },
-      { id: 4, name: "UIUXデザイン実践", time: "15:15-16:45", isCollected: false },
-      { id: 5, name: "アジャイル開発入門", time: "17:00-18:30", isCollected: false },
-      { id: 6, name: "データ分析ハンズオン", time: "10:00-11:30", isCollected: false },
-    ];
-  },
-  (get, set, newStamps: Stamp[]) => {
-    const profile = get(userProfileAtom);
-    if (profile) {
-      const completedCount = newStamps.filter((s) => s.isCollected).length;
-      set(userProfileAtom, {
-        ...profile,
-        stamps: newStamps,
-        completedCount,
-      });
-    }
-  }
+// APIから取得したスタンプ一覧のatom
+export const apiStampsAtom = atom<APIStamp[]>([]);
+
+// ユーザーIDごとの取得済みスタンプIDを保存する型
+type UserStampsMap = Record<string, number[]>;
+
+// LocalStorageと同期する取得済みスタンプIDのマップ（ユーザーIDごと）
+const userStampsStorageAtom = atomWithStorage<UserStampsMap>(
+    "gopher_stamp_rally_user_stamps",
+    {}
 );
 
-// 参加者リストのatom（userProfileから派生）
+// 現在のユーザーの取得済みスタンプIDのセット（derived atom）
+export const acquiredStampIdsAtom = atom<Set<number>>(
+    (get) => {
+        const userProfile = get(userProfileAtom);
+        const userStampsMap = get(userStampsStorageAtom);
+
+        if (!userProfile?.id) {
+            return new Set<number>();
+        }
+
+        const userStamps = userStampsMap[userProfile.id] || [];
+        return new Set<number>(userStamps);
+    },
+    (get, set, newStampIds: Set<number>) => {
+        const userProfile = get(userProfileAtom);
+
+        if (!userProfile?.id) {
+            return;
+        }
+
+        const userStampsMap = get(userStampsStorageAtom);
+        const updatedMap = {
+            ...userStampsMap,
+            [userProfile.id]: Array.from(newStampIds),
+        };
+
+        set(userStampsStorageAtom, updatedMap);
+    }
+);
+
+// スタンプのatom（APIデータとユーザーの取得状態を結合）
+export const stampsAtom = atom<Stamp[]>((get) => {
+    const apiStamps = get(apiStampsAtom);
+    const acquiredIds = get(acquiredStampIdsAtom);
+
+    return apiStamps.map(stamp => ({
+        id: stamp.id,
+        name: stamp.name,
+        image: stamp.image,
+        isCollected: acquiredIds.has(stamp.id),
+    }));
+});
+
+// APIから取得したユーザー一覧のatom
+export const apiUsersAtom = atom<User[]>([]);
+
+// 参加者リストのatom（APIデータから派生）
 export const participantsAtom = atom<Participant[]>((get) => {
-  const profile = get(userProfileAtom);
-  if (profile) {
-    const myParticipant: Participant = {
-      id: MY_PROFILE_ID,
-      name: profile.nickname,
-      completedCount: profile.completedCount,
-      totalCount: profile.totalCount,
-      profileImageUrl: profile.profileImageUrl,
-      isMine: true,
-    };
-    return [myParticipant, ...mockParticipants];
-  }
-  return mockParticipants;
+    const profile = get(userProfileAtom);
+    const apiUsers = get(apiUsersAtom);
+
+    const participants: Participant[] = apiUsers.map(user => ({
+        id: user.id,
+        name: user.name,
+        completedCount: 0, // UserDetailから取得する必要がある
+        totalCount: 0,
+        profileImageUrl: user.icon,
+        isMine: false,
+        twitter_id: user.twitter_id,
+    }));
+
+    if (profile) {
+        const myParticipant: Participant = {
+            id: MY_PROFILE_ID,
+            name: profile.nickname,
+            completedCount: profile.completedCount,
+            totalCount: profile.totalCount,
+            profileImageUrl: profile.profileImageUrl,
+            isMine: true,
+        };
+        return [myParticipant, ...participants];
+    }
+
+    return participants;
 });
 
 // UI状態のatoms
@@ -222,6 +132,6 @@ export const showRegistrationDialogAtom = atom(false);
 
 // ユーザープロフィールが存在するかどうかを確認するatom
 export const hasUserProfileAtom = atom<boolean>((get) => {
-  return get(userProfileAtom) !== null;
+    return get(userProfileAtom) !== null;
 });
 
