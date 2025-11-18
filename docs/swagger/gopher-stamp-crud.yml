@@ -9,6 +9,27 @@ servers:
 paths:
   # User endpoints
   /users:
+    get:
+      summary: ユーザー一覧取得
+      description: 全てのユーザーを取得する
+      operationId: listUsers
+      tags:
+        - Users
+      responses:
+        '200':
+          description: ユーザー一覧の取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: ユーザー作成
       description: 新しいユーザーを作成する
@@ -728,6 +749,16 @@ components:
           type: string
           description: エラー詳細
           example: "name field is required"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: エラーメッセージ
+          example: "リクエストが不正です"
 
 tags:
   - name: Users
