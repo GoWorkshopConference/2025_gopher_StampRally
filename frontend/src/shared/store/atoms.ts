@@ -2,7 +2,7 @@ import {atom} from "jotai";
 import {atomWithStorage} from "jotai/utils";
 import {UserProfile} from "../types/user";
 import {MY_PROFILE_ID} from "../constants";
-import type {Stamp as APIStamp, User} from "../api/types";
+import type {Stamp as APIStamp, User} from "../api/generated/api.schemas";
 
 // UI用のStamp型（API型を拡張）
 export interface Stamp extends Omit<APIStamp, 'created_at' | 'updated_at'> {
@@ -50,34 +50,17 @@ const userStampsStorageAtom = atomWithStorage<UserStampsMap>(
 );
 
 // 現在のユーザーの取得済みスタンプIDのセット（derived atom）
-export const acquiredStampIdsAtom = atom<Set<number>>(
-    (get) => {
-        const userProfile = get(userProfileAtom);
-        const userStampsMap = get(userStampsStorageAtom);
+export const acquiredStampIdsAtom = atom<Set<number>>((get) => {
+    const userProfile = get(userProfileAtom);
+    const userStampsMap = get(userStampsStorageAtom);
 
-        if (!userProfile?.id) {
-            return new Set<number>();
-        }
-
-        const userStamps = userStampsMap[userProfile.id] || [];
-        return new Set<number>(userStamps);
-    },
-    (get, set, newStampIds: Set<number>) => {
-        const userProfile = get(userProfileAtom);
-
-        if (!userProfile?.id) {
-            return;
-        }
-
-        const userStampsMap = get(userStampsStorageAtom);
-        const updatedMap = {
-            ...userStampsMap,
-            [userProfile.id]: Array.from(newStampIds),
-        };
-
-        set(userStampsStorageAtom, updatedMap);
+    if (!userProfile?.id) {
+        return new Set<number>();
     }
-);
+
+    const userStamps = userStampsMap[userProfile.id] || [];
+    return new Set<number>(userStamps);
+});
 
 // スタンプのatom（APIデータとユーザーの取得状態を結合）
 export const stampsAtom = atom<Stamp[]>((get) => {
@@ -95,16 +78,22 @@ export const stampsAtom = atom<Stamp[]>((get) => {
 // APIから取得したユーザー一覧のatom
 export const apiUsersAtom = atom<User[]>([]);
 
+// 各ユーザーの取得済みスタンプ数を記録
+export const userStampCountsAtom = atom<Record<number, number>>({});
+
 // 参加者リストのatom（APIデータから派生）
 export const participantsAtom = atom<Participant[]>((get) => {
     const profile = get(userProfileAtom);
     const apiUsers = get(apiUsersAtom);
+    const stampCounts = get(userStampCountsAtom);
+    const totalStamps = get(apiStampsAtom).length;
+    const acquiredIds = get(acquiredStampIdsAtom);
 
-    const participants: Participant[] = apiUsers.map(user => ({
+    const participantsFromApi: Participant[] = apiUsers.map(user => ({
         id: user.id,
         name: user.name,
-        completedCount: 0, // UserDetailから取得する必要がある
-        totalCount: 0,
+        completedCount: stampCounts[user.id] ?? 0,
+        totalCount: totalStamps,
         profileImageUrl: user.icon,
         isMine: false,
         twitter_id: user.twitter_id,
@@ -114,15 +103,15 @@ export const participantsAtom = atom<Participant[]>((get) => {
         const myParticipant: Participant = {
             id: MY_PROFILE_ID,
             name: profile.nickname,
-            completedCount: profile.completedCount,
-            totalCount: profile.totalCount,
+            completedCount: acquiredIds.size,
+            totalCount: totalStamps,
             profileImageUrl: profile.profileImageUrl,
             isMine: true,
         };
-        return [myParticipant, ...participants];
+        return [myParticipant, ...participantsFromApi];
     }
 
-    return participants;
+    return participantsFromApi;
 });
 
 // UI状態のatoms

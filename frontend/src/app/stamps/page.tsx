@@ -9,13 +9,13 @@ import {Progress} from "@/shared/ui/progress";
 import {Star, Trophy} from "lucide-react";
 import {acquiredStampIdsAtom, apiStampsAtom, stampsAtom, userProfileAtom} from "@/shared/store/atoms";
 import {useAuthRedirect} from "@/shared/hooks/use-auth-redirect";
-import {stampAPI} from "@/shared/api/client";
+import {listStamps, getStamp} from "@/shared/api/generated/stamps/stamps";
 
 export default function StampsPage() {
     useAuthRedirect();
     const stamps = useAtomValue(stampsAtom);
     const setApiStamps = useSetAtom(apiStampsAtom);
-    const [acquiredStampIds, setAcquiredStampIds] = useAtom(acquiredStampIdsAtom);
+    const acquiredStampIds = useAtomValue(acquiredStampIdsAtom);
     const [userProfile, setUserProfile] = useAtom(userProfileAtom);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedStamp, setSelectedStamp] = useState<{ id: number; name: string; image: string } | null>(null);
@@ -24,8 +24,8 @@ export default function StampsPage() {
     useEffect(() => {
         const fetchStamps = async () => {
             try {
-                const response = await stampAPI.list();
-                setApiStamps(response.stamps);
+                const response = await listStamps({limit: 100, offset: 0});
+                setApiStamps(response.stamps || []);
 
                 // userProfileのtotalCountを更新
                 if (userProfile && userProfile.totalCount !== response.stamps.length) {
@@ -63,7 +63,7 @@ export default function StampsPage() {
         };
 
         fetchStamps();
-    }, [setApiStamps, setAcquiredStampIds, setUserProfile, userProfile?.id]);
+    }, [setApiStamps, setUserProfile, userProfile?.id]);
 
     const handleCollect = async (id: number) => {
         if (!userProfile?.id) {
@@ -74,7 +74,7 @@ export default function StampsPage() {
         try {
             // スタンプ詳細を取得して表示（取得APIは呼ばない）
             console.log(`Showing stamp detail for id ${id}`);
-            const stampDetail = await stampAPI.get(id);
+            const stampDetail = await getStamp(id);
             console.log('Stamp detail:', stampDetail);
             setSelectedStamp(stampDetail);
         } catch (error) {
