@@ -3,7 +3,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "Gopher Stamp Rally",
+  title: "Gophers Stamp Rally",
   description: "GoWorkShopConferenceのGophers Stamp Rally企画",
 };
 

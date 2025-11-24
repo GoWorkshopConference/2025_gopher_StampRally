@@ -4,7 +4,7 @@ info:
   description: API for managing users in the Gopher Stamp Rally application
   version: 1.0.0
 servers:
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:8080
 
 paths:
   # User endpoints
@@ -24,6 +24,20 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+              examples:
+                sampleUsers:
+                  summary: モック用の参加者一覧
+                  value:
+                    - id: 101
+                      name: 田中太郎
+                      twitter_id: tanaka_taro
+                      favorite_go_feature: goroutineによる並行処理
+                      icon: https://go.dev/images/gophers/ladder.svg
+                    - id: 102
+                      name: Gopher花子
+                      twitter_id: gopher_hanako
+                      favorite_go_feature: Go初心者向けセッション
+                      icon: https://go.dev/images/gophers/ladder-step.svg
         '500':
           description: サーバーエラー
           content:
@@ -232,6 +246,17 @@ paths:
                   total:
                     type: integer
                     description: 総件数
+              examples:
+                sampleSingleStamp:
+                  summary: モック用に1件のみ返すサンプル
+                  value:
+                    stamps:
+                      - id: 1
+                        name: "Go基礎セッション"
+                        image: "https://go.dev/images/gophers/ladder.svg"
+                        created_at: "2025-11-18T10:00:00Z"
+                        updated_at: "2025-11-18T10:00:00Z"
+                    total: 1
         '500':
           description: サーバーエラー
           content:
@@ -293,6 +318,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Stamp'
+              example:
+                id: 1
+                name: "Go基礎セッション"
+                image: "https://go.dev/images/gophers/ladder.svg"
+                created_at: "2025-11-18T10:00:00Z"
+                updated_at: "2025-11-18T10:00:00Z"
         '404':
           description: スタンプが見つからない
           content:
@@ -381,7 +412,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   # User Stamp endpoints (ユーザーがスタンプを取得)
   /users/{user_id}/stamps:
     get:
@@ -410,6 +440,17 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/UserStamp'
+              examples:
+                user-101:
+                  summary: ユーザー101は0件取得済み
+                  value:
+                    stamps: []
+                user-102:
+                  summary: ユーザー102は1件取得済み（stamp_id = 1）
+                  value:
+                    stamps:
+                      - user_id: 102
+                        stamp_id: [1]
         '404':
           description: ユーザーが見つからない
           content:
@@ -450,6 +491,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserStamp'
+              example:
+                user_id: 1
+                stamp_id: [1]
         '400':
           description: リクエストが不正
           content:
@@ -673,15 +717,13 @@ components:
           description: ユーザーID
           example: 1
         stamp_id:
-          type: integer
-          format: int64
-          description: スタンプID
-          example: 1
-        acquired_at:
-          type: string
-          format: date-time
-          description: スタンプ取得日時
-          example: "2023-01-01T00:00:00Z"
+          type: array
+          description: スタンプIDの配列
+          items:
+            type: integer
+            format: int64
+            description: スタンプID
+            example: 1
 
     AcquireStampRequest:
       type: object
