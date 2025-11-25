@@ -142,6 +142,15 @@ func (h *StampHandler) UpdateStamp(c *gin.Context, id int64) {
 			})
 			return
 		}
+		if err.Error() == "at least one of name or image must be provided" {
+			errMsg := err.Error()
+			c.JSON(http.StatusBadRequest, openapi.Error{
+				Code:    "INVALID_REQUEST",
+				Message: "At least one of name or image must be provided",
+				Details: &errMsg,
+			})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
 			Message: "Failed to update stamp",
