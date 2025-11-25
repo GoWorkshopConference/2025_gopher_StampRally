@@ -67,6 +67,11 @@ func (uc *stampUseCase) CreateStamp(ctx context.Context, name, image string) (*e
 }
 
 func (uc *stampUseCase) UpdateStamp(ctx context.Context, id uint, name, image *string) (*entity.Stamp, error) {
+	// バリデーション: 両方nilの場合はエラー
+	if name == nil && image == nil {
+		return nil, errors.New("at least one of name or image must be provided")
+	}
+
 	stamp, err := uc.stampRepo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
