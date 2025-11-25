@@ -213,11 +213,11 @@ type ServerInterface interface {
 	// (PUT /users/{id})
 	UpdateUser(c *gin.Context, id int64)
 	// ユーザーの取得済みスタンプ一覧取得
-	// (GET /users/{user_id}/stamps)
-	ListUserStamps(c *gin.Context, userId int64)
+	// (GET /users/{id}/stamps)
+	ListUserStamps(c *gin.Context, id int64)
 	// ユーザーがスタンプを取得
-	// (POST /users/{user_id}/stamps)
-	AcquireStamp(c *gin.Context, userId int64)
+	// (POST /users/{id}/stamps)
+	AcquireStamp(c *gin.Context, id int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -427,12 +427,12 @@ func (siw *ServerInterfaceWrapper) ListUserStamps(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "user_id" -------------
-	var userId int64
+	// ------------- Path parameter "id" -------------
+	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", c.Param("user_id"), &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter user_id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -443,7 +443,7 @@ func (siw *ServerInterfaceWrapper) ListUserStamps(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.ListUserStamps(c, userId)
+	siw.Handler.ListUserStamps(c, id)
 }
 
 // AcquireStamp operation middleware
@@ -451,12 +451,12 @@ func (siw *ServerInterfaceWrapper) AcquireStamp(c *gin.Context) {
 
 	var err error
 
-	// ------------- Path parameter "user_id" -------------
-	var userId int64
+	// ------------- Path parameter "id" -------------
+	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", c.Param("user_id"), &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter user_id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -467,7 +467,7 @@ func (siw *ServerInterfaceWrapper) AcquireStamp(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AcquireStamp(c, userId)
+	siw.Handler.AcquireStamp(c, id)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -506,6 +506,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/users", wrapper.CreateUser)
 	router.GET(options.BaseURL+"/users/:id", wrapper.GetUser)
 	router.PUT(options.BaseURL+"/users/:id", wrapper.UpdateUser)
-	router.GET(options.BaseURL+"/users/:user_id/stamps", wrapper.ListUserStamps)
-	router.POST(options.BaseURL+"/users/:user_id/stamps", wrapper.AcquireStamp)
+	router.GET(options.BaseURL+"/users/:id/stamps", wrapper.ListUserStamps)
+	router.POST(options.BaseURL+"/users/:id/stamps", wrapper.AcquireStamp)
 }

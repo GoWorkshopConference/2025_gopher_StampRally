@@ -10,45 +10,89 @@ import (
 )
 
 type UserHandler struct {
-	userUsecase usecase.UserUsecase
+	userUsecase      usecase.UserUsecase
+	userStampUseCase usecase.UserStampUseCase
+	stampHandler     *StampHandler
+	userStampHandler *UserStampHandler
 }
 
-func NewUserHandler(userUsecase usecase.UserUsecase) openapi.ServerInterface {
-	return &UserHandler{userUsecase: userUsecase}
+func NewUserHandler(
+	userUsecase usecase.UserUsecase,
+	userStampUseCase usecase.UserStampUseCase,
+	stampHandler *StampHandler,
+	userStampHandler *UserStampHandler,
+) openapi.ServerInterface {
+	return &UserHandler{
+		userUsecase:      userUsecase,
+		userStampUseCase: userStampUseCase,
+		stampHandler:     stampHandler,
+		userStampHandler: userStampHandler,
+	}
 }
 
 // (POST /users) Swagger生成のインターフェースに合わせたメソッド
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var request openapi.CreateUserRequest
+	var request openapi.UserCreateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, openapi.ErrorResponse{Error: err.Error()})
+		errMsg := err.Error()
+		c.JSON(http.StatusBadRequest, openapi.Error{
+			Code:    "INVALID_REQUEST",
+			Message: "Invalid request body",
+			Details: &errMsg,
+		})
 		return
 	}
 
 	user, err := h.userUsecase.Create(request.Name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, openapi.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, openapi.Error{
+			Code:    "INTERNAL_ERROR",
+			Message: err.Error(),
+		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, openapi.User{
-		Id:   uint64(user.ID),
+		Id:   int64(user.ID),
 		Name: user.Name,
 	})
 }
 
 // (GET /users/{id}) Swagger生成のインターフェースに合わせたメソッド
-func (h *UserHandler) GetUser(c *gin.Context, id uint64) {
-
+func (h *UserHandler) GetUser(c *gin.Context, id int64) {
 	user, err := h.userUsecase.GetByID(uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, openapi.ErrorResponse{Error: "user not found"})
+		c.JSON(http.StatusNotFound, openapi.Error{
+			Code:    "NOT_FOUND",
+			Message: "user not found",
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, openapi.User{
-		Id:   uint64(user.ID),
-		Name: user.Name,
+	// Get user stamps
+	userStamps, err := h.userStampUseCase.ListUserStamps(c.Request.Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, openapi.Error{
+			Code:    "INTERNAL_ERROR",
+			Message: "Failed to fetch user stamps",
+		})
+		return
+	}
+
+	// Convert to openapi.UserStamp
+	acquiredStamps := make([]openapi.UserStamp, len(userStamps))
+	for i, us := range userStamps {
+		acquiredStamps[i] = openapi.UserStamp{
+			UserId:     int64(us.UserID),
+			StampId:    int64(us.StampID),
+			AcquiredAt: &us.AcquiredAt,
+		}
+	}
+
+	c.JSON(http.StatusOK, openapi.UserDetail{
+		Id:             int64(user.ID),
+		Name:           user.Name,
+		AcquiredStamps: &acquiredStamps,
 	})
 }
 
@@ -56,14 +100,17 @@ func (h *UserHandler) GetUser(c *gin.Context, id uint64) {
 func (h *UserHandler) ListUsers(c *gin.Context) {
 	users, err := h.userUsecase.GetAll()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, openapi.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, openapi.Error{
+			Code:    "INTERNAL_ERROR",
+			Message: err.Error(),
+		})
 		return
 	}
 
 	swaggerUsers := make([]openapi.User, len(users))
 	for i, user := range users {
 		swaggerUsers[i] = openapi.User{
-			Id:   uint64(user.ID),
+			Id:   int64(user.ID),
 			Name: user.Name,
 		}
 	}
@@ -72,33 +119,68 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 }
 
 // (PUT /users/{id}) Swagger生成のインターフェースに合わせたメソッド
-func (h *UserHandler) UpdateUser(c *gin.Context, id uint64) {
-
-	var request openapi.UpdateUserRequest
+func (h *UserHandler) UpdateUser(c *gin.Context, id int64) {
+	var request openapi.UserUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, openapi.ErrorResponse{Error: err.Error()})
+		errMsg := err.Error()
+		c.JSON(http.StatusBadRequest, openapi.Error{
+			Code:    "INVALID_REQUEST",
+			Message: "Invalid request body",
+			Details: &errMsg,
+		})
 		return
 	}
 
-	user, err := h.userUsecase.Update(uint(id), request.Name)
+	// Use name if provided, otherwise fetch existing user and keep name
+	if request.Name == nil {
+		c.JSON(http.StatusBadRequest, openapi.Error{
+			Code:    "INVALID_REQUEST",
+			Message: "At least one field must be provided",
+		})
+		return
+	}
+
+	user, err := h.userUsecase.Update(uint(id), *request.Name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, openapi.ErrorResponse{Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, openapi.Error{
+			Code:    "INTERNAL_ERROR",
+			Message: err.Error(),
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, openapi.User{
-		Id:   uint64(user.ID),
+		Id:   int64(user.ID),
 		Name: user.Name,
 	})
 }
 
-// (DELETE /users/{id}) Swagger生成のインターフェースに合わせたメソッド
-func (h *UserHandler) DeleteUser(c *gin.Context, id uint64) {
+// Delegate stamp methods to StampHandler
+func (h *UserHandler) ListStamps(c *gin.Context, params openapi.ListStampsParams) {
+	h.stampHandler.ListStamps(c, params)
+}
 
-	if err := h.userUsecase.Delete(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, openapi.ErrorResponse{Error: err.Error()})
-		return
-	}
+func (h *UserHandler) CreateStamp(c *gin.Context) {
+	h.stampHandler.CreateStamp(c)
+}
 
-	c.Status(http.StatusNoContent)
+func (h *UserHandler) GetStamp(c *gin.Context, id int64) {
+	h.stampHandler.GetStamp(c, id)
+}
+
+func (h *UserHandler) UpdateStamp(c *gin.Context, id int64) {
+	h.stampHandler.UpdateStamp(c, id)
+}
+
+func (h *UserHandler) DeleteStamp(c *gin.Context, id int64) {
+	h.stampHandler.DeleteStamp(c, id)
+}
+
+// Delegate user stamp methods to UserStampHandler
+func (h *UserHandler) ListUserStamps(c *gin.Context, id int64) {
+	h.userStampHandler.ListUserStamps(c, id)
+}
+
+func (h *UserHandler) AcquireStamp(c *gin.Context, id int64) {
+	h.userStampHandler.AcquireStamp(c, id)
 }
