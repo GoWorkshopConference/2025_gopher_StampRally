@@ -20,17 +20,33 @@ var ProviderSet = wire.NewSet(
 	// Infrastructure
 	mysql.NewMySQLClient,
 	NewUserRepository,
+	NewStampRepository,
+	NewUserStampRepository,
 
 	// Usecase
 	usecase.NewUserUsecase,
+	usecase.NewStampUseCase,
+	usecase.NewUserStampUseCase,
 
 	// Handler
+	handler.NewStampHandler,
+	handler.NewUserStampHandler,
 	handler.NewUserHandler,
 )
 
 // NewUserRepository creates a UserRepository interface from mysql implementation
 func NewUserRepository(db *gorm.DB) repository.UserRepository {
 	return mysql.NewUserRepository(db)
+}
+
+// NewStampRepository creates a StampRepository interface from mysql implementation
+func NewStampRepository(db *gorm.DB) repository.StampRepository {
+	return mysql.NewStampRepository(db)
+}
+
+// NewUserStampRepository creates a UserStampRepository interface from mysql implementation
+func NewUserStampRepository(db *gorm.DB) repository.UserStampRepository {
+	return mysql.NewUserStampRepository(db)
 }
 
 // InitializeServer initializes all dependencies and returns a gin.Engine
