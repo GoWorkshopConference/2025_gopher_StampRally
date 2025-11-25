@@ -46,7 +46,11 @@ func makeRequest(t *testing.T, method, path string, body interface{}) (*http.Res
 	resp, err := client.Do(req)
 	require.NoError(t, err)
 
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			t.Logf("Failed to close response body: %v", closeErr)
+		}
+	}()
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
