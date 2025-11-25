@@ -57,7 +57,7 @@ type StampCreateRequest struct {
 	Name string `json:"name"`
 }
 
-// StampUpdateRequest defines model for StampUpdateRequest.
+// StampUpdateRequest スタンプ更新リクエスト。nameとimageの少なくとも1つは必須。
 type StampUpdateRequest struct {
 	// Image スタンプ画像URL
 	Image *string `json:"image,omitempty"`

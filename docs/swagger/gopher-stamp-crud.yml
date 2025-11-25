@@ -286,11 +286,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Stamp'
         '400':
-          description: リクエストが不正
+          description: リクエストが不正（nameとimageの少なくとも1つは必須）
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                code: "INVALID_REQUEST"
+                message: "At least one of name or image must be provided"
+                details: "at least one of name or image must be provided"
         '404':
           description: スタンプが見つからない
           content:
@@ -584,6 +588,7 @@ components:
 
     StampUpdateRequest:
       type: object
+      description: スタンプ更新リクエスト。nameとimageの少なくとも1つは必須。
       properties:
         name:
           type: string
@@ -595,6 +600,7 @@ components:
           description: スタンプ画像URL
           example: "https://example.com/stamps/gopher-basic.png"
           maxLength: 500
+      minProperties: 1
 
     UserStamp:
       type: object
