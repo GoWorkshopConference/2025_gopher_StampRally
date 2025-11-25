@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/usecase"
 	openapi "2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
@@ -180,14 +179,4 @@ func (h *StampHandler) DeleteStamp(c *gin.Context, id int64) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-// Helper function to convert ID from string to int64
-func parseID(c *gin.Context, paramName string) (int64, error) {
-	idStr := c.Param(paramName)
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
 }

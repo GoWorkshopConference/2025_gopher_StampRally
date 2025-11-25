@@ -35,7 +35,7 @@ func NewUserStampUseCase(
 
 func (uc *userStampUseCase) ListUserStamps(ctx context.Context, userID uint) ([]entity.UserStamp, error) {
 	// Check if user exists
-	_, err := uc.userRepo.FindByID(userID)
+	_, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
@@ -53,7 +53,7 @@ func (uc *userStampUseCase) ListUserStamps(ctx context.Context, userID uint) ([]
 
 func (uc *userStampUseCase) AcquireStamp(ctx context.Context, userID, stampID uint) (*entity.UserStamp, error) {
 	// Check if user exists
-	_, err := uc.userRepo.FindByID(userID)
+	_, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")

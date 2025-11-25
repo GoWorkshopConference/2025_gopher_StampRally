@@ -6,6 +6,7 @@ package mock_repository
 
 import (
 	entity "2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/entity"
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,73 +36,73 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(user *entity.User) error {
+func (m *MockUserRepository) Create(ctx context.Context, user *entity.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", user)
+	ret := m.ctrl.Call(m, "Create", ctx, user)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserRepositoryMockRecorder) Create(user interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Create(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), ctx, user)
 }
 
 // Delete mocks base method.
-func (m *MockUserRepository) Delete(id uint) error {
+func (m *MockUserRepository) Delete(ctx context.Context, id uint) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", id)
+	ret := m.ctrl.Call(m, "Delete", ctx, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockUserRepositoryMockRecorder) Delete(id interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUserRepository)(nil).Delete), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUserRepository)(nil).Delete), ctx, id)
 }
 
 // FindAll mocks base method.
-func (m *MockUserRepository) FindAll() ([]*entity.User, error) {
+func (m *MockUserRepository) FindAll(ctx context.Context) ([]*entity.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAll")
+	ret := m.ctrl.Call(m, "FindAll", ctx)
 	ret0, _ := ret[0].([]*entity.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindAll indicates an expected call of FindAll.
-func (mr *MockUserRepositoryMockRecorder) FindAll() *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) FindAll(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockUserRepository)(nil).FindAll))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockUserRepository)(nil).FindAll), ctx)
 }
 
 // FindByID mocks base method.
-func (m *MockUserRepository) FindByID(id uint) (*entity.User, error) {
+func (m *MockUserRepository) FindByID(ctx context.Context, id uint) (*entity.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", id)
+	ret := m.ctrl.Call(m, "FindByID", ctx, id)
 	ret0, _ := ret[0].(*entity.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByID indicates an expected call of FindByID.
-func (mr *MockUserRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) FindByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), ctx, id)
 }
 
 // Update mocks base method.
-func (m *MockUserRepository) Update(user *entity.User) error {
+func (m *MockUserRepository) Update(ctx context.Context, user *entity.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", user)
+	ret := m.ctrl.Call(m, "Update", ctx, user)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockUserRepositoryMockRecorder) Update(user interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Update(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), ctx, user)
 }

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"testing"
 
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/entity"
@@ -29,8 +30,8 @@ func TestUserUsecase_Create(t *testing.T) {
 			userName: "Test User",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					Create(gomock.Any()).
-					DoAndReturn(func(user *entity.User) error {
+					Create(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(ctx context.Context, user *entity.User) error {
 						user.ID = 1 // リポジトリで設定されるIDをシミュレート
 						return nil
 					})
@@ -46,7 +47,7 @@ func TestUserUsecase_Create(t *testing.T) {
 			userName: "Test User",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					Create(gomock.Any()).
+					Create(gomock.Any(), gomock.Any()).
 					Return(assert.AnError)
 			},
 			want:    nil,
@@ -57,7 +58,7 @@ func TestUserUsecase_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.Create(tt.userName)
+			got, err := usecase.Create(context.Background(), tt.userName)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -88,7 +89,7 @@ func TestUserUsecase_GetByID(t *testing.T) {
 			id:   1,
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindByID(uint(1)).
+					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{
 						ID:   1,
 						Name: "Test User",
@@ -105,7 +106,7 @@ func TestUserUsecase_GetByID(t *testing.T) {
 			id:   999,
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindByID(uint(999)).
+					FindByID(gomock.Any(), uint(999)).
 					Return(nil, assert.AnError)
 			},
 			want:    nil,
@@ -116,7 +117,7 @@ func TestUserUsecase_GetByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.GetByID(tt.id)
+			got, err := usecase.GetByID(context.Background(), tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -145,7 +146,7 @@ func TestUserUsecase_GetAll(t *testing.T) {
 			name: "success",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindAll().
+					FindAll(gomock.Any()).
 					Return([]*entity.User{
 						{ID: 1, Name: "User 1"},
 						{ID: 2, Name: "User 2"},
@@ -161,7 +162,7 @@ func TestUserUsecase_GetAll(t *testing.T) {
 			name: "empty list",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindAll().
+					FindAll(gomock.Any()).
 					Return([]*entity.User{}, nil)
 			},
 			want:    []*entity.User{},
@@ -171,7 +172,7 @@ func TestUserUsecase_GetAll(t *testing.T) {
 			name: "infrastructure error",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindAll().
+					FindAll(gomock.Any()).
 					Return(nil, assert.AnError)
 			},
 			want:    nil,
@@ -182,7 +183,7 @@ func TestUserUsecase_GetAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.GetAll()
+			got, err := usecase.GetAll(context.Background())
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -215,14 +216,14 @@ func TestUserUsecase_Update(t *testing.T) {
 			userName: "Updated User",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindByID(uint(1)).
+					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{
 						ID:   1,
 						Name: "Original User",
 					}, nil)
 				mockRepo.EXPECT().
-					Update(gomock.Any()).
-					DoAndReturn(func(user *entity.User) error {
+					Update(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(ctx context.Context, user *entity.User) error {
 						return nil
 					})
 			},
@@ -238,7 +239,7 @@ func TestUserUsecase_Update(t *testing.T) {
 			userName: "Updated User",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindByID(uint(999)).
+					FindByID(gomock.Any(), uint(999)).
 					Return(nil, assert.AnError)
 			},
 			want:    nil,
@@ -250,13 +251,13 @@ func TestUserUsecase_Update(t *testing.T) {
 			userName: "Updated User",
 			mockFn: func() {
 				mockRepo.EXPECT().
-					FindByID(uint(1)).
+					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{
 						ID:   1,
 						Name: "Original User",
 					}, nil)
 				mockRepo.EXPECT().
-					Update(gomock.Any()).
+					Update(gomock.Any(), gomock.Any()).
 					Return(assert.AnError)
 			},
 			want:    nil,
@@ -267,7 +268,7 @@ func TestUserUsecase_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.Update(tt.id, tt.userName)
+			got, err := usecase.Update(context.Background(), tt.id, tt.userName)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -297,7 +298,7 @@ func TestUserUsecase_Delete(t *testing.T) {
 			id:   1,
 			mockFn: func() {
 				mockRepo.EXPECT().
-					Delete(uint(1)).
+					Delete(gomock.Any(), uint(1)).
 					Return(nil)
 			},
 			wantErr: false,
@@ -307,7 +308,7 @@ func TestUserUsecase_Delete(t *testing.T) {
 			id:   999,
 			mockFn: func() {
 				mockRepo.EXPECT().
-					Delete(uint(999)).
+					Delete(gomock.Any(), uint(999)).
 					Return(assert.AnError)
 			},
 			wantErr: true,
@@ -317,7 +318,7 @@ func TestUserUsecase_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			err := usecase.Delete(tt.id)
+			err := usecase.Delete(context.Background(), tt.id)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

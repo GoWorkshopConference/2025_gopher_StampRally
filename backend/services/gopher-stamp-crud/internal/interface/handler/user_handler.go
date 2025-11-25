@@ -43,7 +43,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userUsecase.Create(request.Name)
+	user, err := h.userUsecase.Create(c.Request.Context(), request.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
@@ -60,7 +60,9 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 // (GET /users/{id}) Swagger生成のインターフェースに合わせたメソッド
 func (h *UserHandler) GetUser(c *gin.Context, id int64) {
-	user, err := h.userUsecase.GetByID(uint(id))
+	ctx := c.Request.Context()
+
+	user, err := h.userUsecase.GetByID(ctx, uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, openapi.Error{
 			Code:    "NOT_FOUND",
@@ -70,7 +72,7 @@ func (h *UserHandler) GetUser(c *gin.Context, id int64) {
 	}
 
 	// Get user stamps
-	userStamps, err := h.userStampUseCase.ListUserStamps(c.Request.Context(), uint(id))
+	userStamps, err := h.userStampUseCase.ListUserStamps(ctx, uint(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
@@ -98,7 +100,7 @@ func (h *UserHandler) GetUser(c *gin.Context, id int64) {
 
 // (GET /users) Swagger生成のインターフェースに合わせたメソッド
 func (h *UserHandler) ListUsers(c *gin.Context) {
-	users, err := h.userUsecase.GetAll()
+	users, err := h.userUsecase.GetAll(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
@@ -140,7 +142,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context, id int64) {
 		return
 	}
 
-	user, err := h.userUsecase.Update(uint(id), *request.Name)
+	user, err := h.userUsecase.Update(c.Request.Context(), uint(id), *request.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
