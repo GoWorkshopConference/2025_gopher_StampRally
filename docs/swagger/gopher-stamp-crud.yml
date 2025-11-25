@@ -335,7 +335,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # User Stamp endpoints (ユーザーがスタンプを取得)
-  /users/{user_id}/stamps:
+  /users/{id}/stamps:
     get:
       summary: ユーザーの取得済みスタンプ一覧取得
       description: 指定されたユーザーが取得したスタンプの一覧を取得する
@@ -343,7 +343,7 @@ paths:
       tags:
         - UserStamps
       parameters:
-        - name: user_id
+        - name: id
           in: path
           required: true
           description: ユーザーID
@@ -382,7 +382,7 @@ paths:
       tags:
         - UserStamps
       parameters:
-        - name: user_id
+        - name: id
           in: path
           required: true
           description: ユーザーID
