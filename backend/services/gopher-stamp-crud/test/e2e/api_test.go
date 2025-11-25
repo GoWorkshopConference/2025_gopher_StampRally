@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -16,6 +17,13 @@ import (
 const (
 	baseURL = "http://localhost:8080"
 )
+
+// skipIfCI skips the test if running in CI environment
+func skipIfCI(t *testing.T) {
+	if os.Getenv("CI") != "" {
+		t.Skip("Skipping E2E test in CI environment (requires running server)")
+	}
+}
 
 // Helper functions
 
@@ -73,6 +81,8 @@ type UserStamp struct {
 // Test Cases
 
 func TestE2E_UserCRUD(t *testing.T) {
+	skipIfCI(t)
+
 	t.Run("Create User", func(t *testing.T) {
 		reqBody := map[string]string{
 			"name": "Test User",
@@ -148,6 +158,8 @@ func TestE2E_UserCRUD(t *testing.T) {
 }
 
 func TestE2E_StampCRUD(t *testing.T) {
+	skipIfCI(t)
+
 	t.Run("Create Stamp", func(t *testing.T) {
 		reqBody := map[string]string{
 			"name":  "Gopher Basic",
@@ -252,6 +264,8 @@ func TestE2E_StampCRUD(t *testing.T) {
 }
 
 func TestE2E_UserStampAcquisition(t *testing.T) {
+	skipIfCI(t)
+
 	t.Run("Acquire Stamp", func(t *testing.T) {
 		// Create a user
 		userReq := map[string]string{
