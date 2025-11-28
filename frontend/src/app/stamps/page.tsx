@@ -9,7 +9,7 @@ import {Progress} from "@/shared/ui/progress";
 import {Star, Trophy} from "lucide-react";
 import {acquiredStampIdsAtom, apiStampsAtom, stampsAtom, userProfileAtom} from "@/shared/store/atoms";
 import {useAuthRedirect} from "@/shared/hooks/use-auth-redirect";
-import {listStamps, getStamp} from "@/shared/api/generated/stamps/stamps";
+import {fetchStampList, fetchStampDetail} from "@/shared/api/stamp-api";
 
 export default function StampsPage() {
     useAuthRedirect();
@@ -24,8 +24,8 @@ export default function StampsPage() {
     useEffect(() => {
         const fetchStamps = async () => {
             try {
-                const response = await listStamps({limit: 100, offset: 0});
-                setApiStamps(response.stamps || []);
+                const response = await fetchStampList(100, 0);
+                setApiStamps(response.stamps);
 
                 // userProfileのtotalCountを更新
                 if (userProfile && userProfile.totalCount !== response.stamps.length) {
@@ -74,7 +74,7 @@ export default function StampsPage() {
         try {
             // スタンプ詳細を取得して表示（取得APIは呼ばない）
             console.log(`Showing stamp detail for id ${id}`);
-            const stampDetail = await getStamp(id);
+            const stampDetail = await fetchStampDetail(id);
             console.log('Stamp detail:', stampDetail);
             setSelectedStamp(stampDetail);
         } catch (error) {

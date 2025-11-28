@@ -124,3 +124,48 @@ export const hasUserProfileAtom = atom<boolean>((get) => {
     return get(userProfileAtom) !== null;
 });
 
+// スタンプ追加アクション（書き込み専用atom）
+export const addStampAtom = atom(
+    null,
+    (get, set, stampId: number) => {
+        const userProfile = get(userProfileAtom);
+        const userStampsMap = get(userStampsStorageAtom);
+
+        if (!userProfile?.id) {
+            console.warn('No user profile found, cannot add stamp');
+            return false;
+        }
+
+        const userId = String(userProfile.id);
+        const currentStamps = userStampsMap[userId] || [];
+
+        // 既に取得済みかチェック
+        if (currentStamps.includes(stampId)) {
+            console.log(`Stamp ${stampId} already acquired`);
+            return false;
+        }
+
+        // スタンプを追加
+        const updatedStamps = [...currentStamps, stampId];
+        set(userStampsStorageAtom, {
+            ...userStampsMap,
+            [userId]: updatedStamps,
+        });
+
+        // userProfileのcompletedCountも更新
+        set(userProfileAtom, {
+            ...userProfile,
+            completedCount: updatedStamps.length,
+        });
+
+        console.log(`Added stamp ${stampId} for user ${userId}. Total: ${updatedStamps.length}`);
+        return true;
+    }
+);
+
+// スタンプが既に取得済みかチェックする関数
+export const isStampAcquiredAtom = atom((get) => (stampId: number): boolean => {
+    const acquiredIds = get(acquiredStampIdsAtom);
+    return acquiredIds.has(stampId);
+});
+
