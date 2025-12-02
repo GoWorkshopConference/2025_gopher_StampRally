@@ -43,7 +43,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/Error'
     post:
       summary: ユーザー作成
       description: 新しいユーザーを作成する
@@ -63,54 +63,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        '400':
-          description: リクエストが不正
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: サーバーエラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /users/filter:
-    post:
-      summary: ユーザー検索・一覧取得
-      description: 名前またはTwitterIDでユーザーを検索する。検索キーワードが空の場合は全てのユーザーを取得する。
-      operationId: filterUsers
-      tags:
-        - Users
-      parameters:
-        - name: query
-          in: query
-          description: 検索キーワード（名前またはTwitterIDで部分一致検索）。空文字または未指定の場合は全件取得。
-          required: false
-          schema:
-            type: string
-            example: "田中"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserFilterRequest'
-      responses:
-        '200':
-          description: ユーザー検索成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  users:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
         '400':
           description: リクエストが不正
           content:
@@ -365,11 +317,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Stamp'
         '400':
-          description: リクエストが不正
+          description: リクエストが不正（nameとimageの少なくとも1つは必須）
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                code: "INVALID_REQUEST"
+                message: "At least one of name or image must be provided"
+                details: "at least one of name or image must be provided"
         '404':
           description: スタンプが見つからない
           content:
@@ -413,7 +369,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   # User Stamp endpoints (ユーザーがスタンプを取得)
-  /users/{user_id}/stamps:
+  /users/{id}/stamps:
     get:
       summary: ユーザーの取得済みスタンプ一覧取得
       description: 指定されたユーザーが取得したスタンプの一覧を取得する
@@ -421,7 +377,7 @@ paths:
       tags:
         - UserStamps
       parameters:
-        - name: user_id
+        - name: id
           in: path
           required: true
           description: ユーザーID
@@ -471,7 +427,7 @@ paths:
       tags:
         - UserStamps
       parameters:
-        - name: user_id
+        - name: id
           in: path
           required: true
           description: ユーザーID
@@ -613,23 +569,6 @@ components:
           example: "https://example.com/icons/gopher.png"
           maxLength: 500
 
-    UserFilterRequest:
-      type: object
-      properties:
-        page:
-          type: integer
-          description: ページ番号（1から開始）
-          default: 1
-          minimum: 1
-          example: 1
-        page_size:
-          type: integer
-          description: 1ページあたりの取得件数
-          default: 20
-          minimum: 1
-          maximum: 100
-          example: 20
-
     UserDetail:
       allOf:
         - $ref: '#/components/schemas/User'
@@ -693,6 +632,7 @@ components:
 
     StampUpdateRequest:
       type: object
+      description: スタンプ更新リクエスト。nameとimageの少なくとも1つは必須。
       properties:
         name:
           type: string
@@ -704,6 +644,7 @@ components:
           description: スタンプ画像URL
           example: "https://example.com/stamps/gopher-basic.png"
           maxLength: 500
+      minProperties: 1
 
     UserStamp:
       type: object
@@ -736,43 +677,6 @@ components:
           description: 取得するスタンプのID
           example: 1
 
-    Pagination:
-      type: object
-      required:
-        - page
-        - page_size
-        - total_items
-        - total_pages
-      properties:
-        page:
-          type: integer
-          description: 現在のページ番号
-          example: 1
-          minimum: 1
-        page_size:
-          type: integer
-          description: 1ページあたりの件数
-          example: 20
-          minimum: 1
-        total_items:
-          type: integer
-          description: 総件数
-          example: 100
-          minimum: 0
-        total_pages:
-          type: integer
-          description: 総ページ数
-          example: 5
-          minimum: 0
-        has_next:
-          type: boolean
-          description: 次のページが存在するか
-          example: true
-        has_previous:
-          type: boolean
-          description: 前のページが存在するか
-          example: false
-
     Error:
       type: object
       required:
@@ -791,16 +695,6 @@ components:
           type: string
           description: エラー詳細
           example: "name field is required"
-
-    ErrorResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-          description: エラーメッセージ
-          example: "リクエストが不正です"
 
 tags:
   - name: Users
