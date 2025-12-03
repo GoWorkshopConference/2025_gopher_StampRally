@@ -34,8 +34,6 @@ import type {
 import { customInstance } from '../../mutator';
 
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
 
 
 /**
@@ -43,43 +41,43 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary ユーザーの取得済みスタンプ一覧取得
  */
 export const listUserStamps = (
-    userId: number,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+    id: number,
+ signal?: AbortSignal
 ) => {
       
       
       return customInstance<ListUserStamps200>(
-      {url: `/users/${userId}/stamps`, method: 'GET', signal
+      {url: `/users/${id}/stamps`, method: 'GET', signal
     },
-      options);
+      );
     }
   
 
 
 
-export const getListUserStampsQueryKey = (userId?: number,) => {
+export const getListUserStampsQueryKey = (id?: number,) => {
     return [
-    `/users/${userId}/stamps`
+    `/users/${id}/stamps`
     ] as const;
     }
 
     
-export const getListUserStampsQueryOptions = <TData = Awaited<ReturnType<typeof listUserStamps>>, TError = Error>(userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListUserStampsQueryOptions = <TData = Awaited<ReturnType<typeof listUserStamps>>, TError = Error>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListUserStampsQueryKey(userId);
+  const queryKey =  queryOptions?.queryKey ?? getListUserStampsQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserStamps>>> = ({ signal }) => listUserStamps(userId, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserStamps>>> = ({ signal }) => listUserStamps(id, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(userId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
 export type ListUserStampsQueryResult = NonNullable<Awaited<ReturnType<typeof listUserStamps>>>
@@ -87,27 +85,27 @@ export type ListUserStampsQueryError = Error
 
 
 export function useListUserStamps<TData = Awaited<ReturnType<typeof listUserStamps>>, TError = Error>(
- userId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>> & Pick<
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listUserStamps>>,
           TError,
           Awaited<ReturnType<typeof listUserStamps>>
         > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListUserStamps<TData = Awaited<ReturnType<typeof listUserStamps>>, TError = Error>(
- userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>> & Pick<
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listUserStamps>>,
           TError,
           Awaited<ReturnType<typeof listUserStamps>>
         > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListUserStamps<TData = Awaited<ReturnType<typeof listUserStamps>>, TError = Error>(
- userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -115,11 +113,11 @@ export function useListUserStamps<TData = Awaited<ReturnType<typeof listUserStam
  */
 
 export function useListUserStamps<TData = Awaited<ReturnType<typeof listUserStamps>>, TError = Error>(
- userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserStamps>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListUserStampsQueryOptions(userId,options)
+  const queryOptions = getListUserStampsQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -136,40 +134,40 @@ export function useListUserStamps<TData = Awaited<ReturnType<typeof listUserStam
  * @summary ユーザーがスタンプを取得
  */
 export const acquireStamp = (
-    userId: number,
+    id: number,
     acquireStampRequest: AcquireStampRequest,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+ signal?: AbortSignal
 ) => {
       
       
       return customInstance<UserStamp>(
-      {url: `/users/${userId}/stamps`, method: 'POST',
+      {url: `/users/${id}/stamps`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: acquireStampRequest, signal
     },
-      options);
+      );
     }
   
 
 
 export const getAcquireStampMutationOptions = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acquireStamp>>, TError,{userId: number;data: AcquireStampRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof acquireStamp>>, TError,{userId: number;data: AcquireStampRequest}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acquireStamp>>, TError,{id: number;data: AcquireStampRequest}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof acquireStamp>>, TError,{id: number;data: AcquireStampRequest}, TContext> => {
 
 const mutationKey = ['acquireStamp'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acquireStamp>>, {userId: number;data: AcquireStampRequest}> = (props) => {
-          const {userId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acquireStamp>>, {id: number;data: AcquireStampRequest}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  acquireStamp(userId,data,requestOptions)
+          return  acquireStamp(id,data,)
         }
 
         
@@ -185,11 +183,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary ユーザーがスタンプを取得
  */
 export const useAcquireStamp = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acquireStamp>>, TError,{userId: number;data: AcquireStampRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acquireStamp>>, TError,{id: number;data: AcquireStampRequest}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof acquireStamp>>,
         TError,
-        {userId: number;data: AcquireStampRequest},
+        {id: number;data: AcquireStampRequest},
         TContext
       > => {
 

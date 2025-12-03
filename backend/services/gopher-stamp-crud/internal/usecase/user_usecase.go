@@ -8,10 +8,10 @@ import (
 )
 
 type UserUsecase interface {
-	Create(ctx context.Context, name string) (*entity.User, error)
+	Create(ctx context.Context, name string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error)
 	GetByID(ctx context.Context, id uint) (*entity.User, error)
 	GetAll(ctx context.Context) ([]*entity.User, error)
-	Update(ctx context.Context, id uint, name string) (*entity.User, error)
+	Update(ctx context.Context, id uint, name *string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error)
 	Delete(ctx context.Context, id uint) error
 }
 
@@ -23,9 +23,12 @@ func NewUserUsecase(userRepo repository.UserRepository) UserUsecase {
 	return &userUsecase{userRepo: userRepo}
 }
 
-func (u *userUsecase) Create(ctx context.Context, name string) (*entity.User, error) {
+func (u *userUsecase) Create(ctx context.Context, name string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error) {
 	user := &entity.User{
-		Name: name,
+		Name:              name,
+		TwitterID:         twitterID,
+		FavoriteGoFeature: favoriteGoFeature,
+		Icon:              icon,
 	}
 	if err := u.userRepo.Create(ctx, user); err != nil {
 		return nil, err
@@ -41,13 +44,25 @@ func (u *userUsecase) GetAll(ctx context.Context) ([]*entity.User, error) {
 	return u.userRepo.FindAll(ctx)
 }
 
-func (u *userUsecase) Update(ctx context.Context, id uint, name string) (*entity.User, error) {
+func (u *userUsecase) Update(ctx context.Context, id uint, name *string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error) {
 	user, err := u.userRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	user.Name = name
+	if name != nil {
+		user.Name = *name
+	}
+	if twitterID != nil {
+		user.TwitterID = twitterID
+	}
+	if favoriteGoFeature != nil {
+		user.FavoriteGoFeature = favoriteGoFeature
+	}
+	if icon != nil {
+		user.Icon = icon
+	}
+
 	if err := u.userRepo.Update(ctx, user); err != nil {
 		return nil, err
 	}

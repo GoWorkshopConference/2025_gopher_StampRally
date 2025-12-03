@@ -9,7 +9,7 @@ include configs/wire-options.env
 
 build:
 	@echo "Building services..."
-	@go1.24.0 build ./services/...
+	@go build ./services/...
 	@echo "Build completed."
 
 test:
@@ -18,15 +18,15 @@ test:
 	@echo "Tests completed."
 
 lint:
-	@echo "Running linter with Go 1.24..."
-	@PATH=$(shell go1.24.0 env GOPATH)/bin:$(PATH) go1.24.0 mod tidy
-	@PATH=$(shell go1.24.0 env GOPATH)/bin:$(PATH) go1.24.0 build ./services/...
-	@PATH=$(shell go1.24.0 env GOPATH)/bin:$(PATH) golangci-lint run $(LINT_TARGETS) --config=$(LINT_CONFIG_PATH)
+	@echo "Running linter with Go"
+	@go mod tidy
+	@go build ./services/...
+	@golangci-lint run $(LINT_TARGETS) --config=$(LINT_CONFIG_PATH)
 	@echo "Linting completed."
 
 tidy:
 	@echo "Tidying modules..."
-	@go1.24.0 mod tidy
+	@go mod tidy
 	@echo "Tidying completed."
 
 compose-up:
@@ -40,14 +40,14 @@ compose-down:
 swagger-gen:
 	@echo "Generating Swagger files..."
 	@mkdir -p $(SWAGGER_OUTPUT_DIR)
-	@oapi-codegen $(OAPI_GENERATE_OPTIONS) \
+	@go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1 $(OAPI_GENERATE_OPTIONS) \
 		$(SWAGGER_SPEC_PATH) > $(SWAGGER_OUTPUT_DIR)/gopher-stamp-crud.gen.go
 	@echo "Swagger generation completed."
 
 swagger-check:
 	@echo "Checking if Swagger files are up to date..."
 	@mkdir -p $(SWAGGER_OUTPUT_DIR)/tmp
-	@oapi-codegen $(OAPI_GENERATE_OPTIONS) \
+	@go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.5.1 $(OAPI_GENERATE_OPTIONS) \
 		$(SWAGGER_SPEC_PATH) > $(SWAGGER_OUTPUT_DIR)/tmp/gopher-stamp-crud.gen.go
 	@if ! diff -r $(SWAGGER_OUTPUT_DIR)/gopher-stamp-crud.gen.go $(SWAGGER_OUTPUT_DIR)/tmp/gopher-stamp-crud.gen.go > /dev/null 2>&1; then \
 		echo "Error: Swagger files are not up to date. Please run 'make swagger-gen'"; \

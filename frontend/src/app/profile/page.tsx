@@ -8,12 +8,13 @@ import {Input} from "@/shared/ui/input";
 import {Label} from "@/shared/ui/label";
 import {Checkbox} from "@/shared/ui/checkbox";
 import {Card, CardContent, CardHeader, CardTitle} from "@/shared/ui/card";
-import {GOLANG_POINTS} from "@/shared/types/user";
+import {GOLANG_POINTS, GOLANG_POINT_CODE_MAP} from "@/shared/types/user";
 import {userProfileAtom} from "@/shared/store/atoms";
 import {ImageWithFallback} from "@/shared/lib/ImageWithFallback";
 import {AppLayout} from "@/widgets/app-layout/ui/app-layout";
 import {AppHeader} from "@/widgets/app-header/ui/app-header";
 import {ArrowLeft, Save} from "lucide-react";
+import {updateUser} from "@/shared/api/generated/users/users";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -23,6 +24,7 @@ export default function ProfilePage() {
     const [profileImageUrl, setProfileImageUrl] = useState("");
     const [selectedPoints, setSelectedPoints] = useState<string[]>([]);
     const [imagePreview, setImagePreview] = useState<string>("");
+    const [isFileUploaded, setIsFileUploaded] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -33,9 +35,12 @@ export default function ProfilePage() {
 
         setNickname(userProfile.nickname);
         setTwitterId(userProfile.twitterId);
-        setProfileImageUrl(userProfile.profileImageUrl || "");
+        const imageUrl = userProfile.profileImageUrl || "";
+        setProfileImageUrl(imageUrl);
         setSelectedPoints(userProfile.favoriteGolangPoints);
-        setImagePreview(userProfile.profileImageUrl || "");
+        setImagePreview(imageUrl);
+        // 既存の画像がbase64（ファイルアップロード）の場合は、URL入力欄を非表示
+        setIsFileUploaded(imageUrl.startsWith("data:"));
     }, [userProfile, router]);
 
     const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +52,7 @@ export default function ProfilePage() {
             const result = reader.result as string;
             setImagePreview(result);
             setProfileImageUrl(result);
+            setIsFileUploaded(true); // ファイルアップロード時はURL入力欄を非表示
         };
         reader.readAsDataURL(file);
     }, []);
@@ -61,20 +67,20 @@ export default function ProfilePage() {
         const url = e.target.value;
         setProfileImageUrl(url);
         // URLが空でない場合のみプレビューを更新
-        // 空の場合は、ファイルから選択された画像を保持
         if (url) {
             setImagePreview(url);
-        } else if (!imagePreview.startsWith("data:")) {
-            // ファイル選択の画像がない場合はクリア
+        } else {
             setImagePreview("");
         }
-    }, [imagePreview]);
+        // URLを入力した場合は、ファイルアップロード状態を解除
+        setIsFileUploaded(false);
+    }, []);
 
     const isValid = useMemo(() => {
         return nickname.trim().length > 0 && twitterId.trim().length > 0 && selectedPoints.length > 0;
     }, [nickname, twitterId, selectedPoints]);
 
-    const handleSave = useCallback(() => {
+    const handleSave = useCallback(async () => {
         if (!isValid) {
             // バリデーションエラーメッセージを表示（将来的にトースト通知に置き換え可能）
             if (!nickname.trim() || !twitterId.trim()) {
@@ -90,18 +96,56 @@ export default function ProfilePage() {
 
         if (!userProfile) return;
 
-        const updated = {
-            ...userProfile,
-            nickname: nickname.trim(),
-            twitterId: twitterId.trim(),
-            profileImageUrl: profileImageUrl,
-            favoriteGolangPoints: selectedPoints,
-        };
+        try {
+            // 画像の処理: URLの場合はそのまま保存、base64（ファイルアップロード）の場合はそのまま保存
+            let iconValue = "";
+            if (profileImageUrl && profileImageUrl.trim()) {
+                // http://またはhttps://で始まる場合はURLとしてそのまま保存
+                if (profileImageUrl.startsWith("http://") || profileImageUrl.startsWith("https://")) {
+                    iconValue = profileImageUrl.trim();
+                } else if (profileImageUrl.startsWith("data:")) {
+                    // base64（ファイルアップロード）の場合はそのまま保存
+                    iconValue = profileImageUrl;
+                } else {
+                    // その他の場合は既存の画像を保持
+                    iconValue = userProfile.profileImageUrl || "";
+                }
+            }
 
-        setUserProfile(updated);
-        // 成功メッセージを表示（将来的にトースト通知に置き換え可能）
-        alert("プロフィールを更新しました");
-        router.push("/stamps");
+            // LocalStorage用に保持している日本語ラベルはそのまま使い続ける
+            // LocalStorageにはURLまたはbase64画像を保存
+            const updated = {
+                ...userProfile,
+                nickname: nickname.trim(),
+                twitterId: twitterId.trim(),
+                profileImageUrl: iconValue,
+                favoriteGolangPoints: selectedPoints,
+            };
+
+            setUserProfile(updated);
+
+            // バックエンドには英字コードのみを保存
+            const favoriteGoFeatureCodes = selectedPoints.map(
+                (label) => GOLANG_POINT_CODE_MAP[label as keyof typeof GOLANG_POINT_CODE_MAP] ?? label,
+            );
+            const favoriteGoFeature = favoriteGoFeatureCodes.join(",");
+
+            const numericId = Number(userProfile.id);
+            if (!Number.isNaN(numericId)) {
+                await updateUser(numericId, {
+                    name: nickname.trim(),
+                    twitter_id: twitterId.trim(),
+                    favorite_go_feature: favoriteGoFeature,
+                    icon: iconValue || undefined,
+                });
+            }
+
+            alert("プロフィールを更新しました");
+            router.push("/stamps");
+        } catch (error) {
+            console.error("Failed to update profile on backend:", error);
+            alert("バックエンドへのプロフィール更新に失敗しました。時間をおいて再度お試しください。");
+        }
     }, [isValid, nickname, twitterId, selectedPoints, profileImageUrl, userProfile, setUserProfile, router]);
 
     const progressPercentage = useMemo(() => {
@@ -187,14 +231,18 @@ export default function ProfilePage() {
                                     onChange={handleImageSelect}
                                 />
                             </div>
-                            <Input
-                                id="profileImageUrl"
-                                placeholder="画像URL（オプション）"
-                                value={profileImageUrl.startsWith("data:") ? "" : profileImageUrl}
-                                onChange={handleImageUrlChange}
-                            />
+                            {!isFileUploaded && (
+                                <Input
+                                    id="profileImageUrl"
+                                    placeholder="画像URL（オプション）"
+                                    value={profileImageUrl}
+                                    onChange={handleImageUrlChange}
+                                />
+                            )}
                             <p className="text-xs text-gray-500">
-                                ファイルを選択するか、画像のURLを入力してください
+                                {isFileUploaded
+                                    ? "画像をアップロードしました。別の画像を選択する場合は、再度「画像を選択」ボタンをクリックしてください。"
+                                    : "ファイルを選択するか、画像のURLを入力してください"}
                             </p>
                         </div>
 

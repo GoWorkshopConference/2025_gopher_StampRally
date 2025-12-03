@@ -205,7 +205,6 @@ paths:
                     stamps:
                       - id: 1
                         name: "Go基礎セッション"
-                        image: "https://go.dev/images/gophers/ladder.svg"
                         created_at: "2025-11-18T10:00:00Z"
                         updated_at: "2025-11-18T10:00:00Z"
                     total: 1
@@ -273,7 +272,6 @@ paths:
               example:
                 id: 1
                 name: "Go基礎セッション"
-                image: "https://go.dev/images/gophers/ladder.svg"
                 created_at: "2025-11-18T10:00:00Z"
                 updated_at: "2025-11-18T10:00:00Z"
         '404':
@@ -317,15 +315,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Stamp'
         '400':
-          description: リクエストが不正（nameとimageの少なくとも1つは必須）
+          description: リクエストが不正（nameは必須）
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
                 code: "INVALID_REQUEST"
-                message: "At least one of name or image must be provided"
-                details: "at least one of name or image must be provided"
+                message: "name must be provided"
+                details: "name must be provided"
         '404':
           description: スタンプが見つからない
           content:
@@ -585,7 +583,6 @@ components:
       required:
         - id
         - name
-        - image
       properties:
         id:
           type: integer
@@ -597,11 +594,6 @@ components:
           description: スタンプ名
           example: "Gopher基礎"
           maxLength: 100
-        image:
-          type: string
-          description: スタンプ画像URL
-          example: "https://example.com/stamps/gopher-basic.png"
-          maxLength: 500
         created_at:
           type: string
           format: date-time
@@ -617,34 +609,22 @@ components:
       type: object
       required:
         - name
-        - image
       properties:
         name:
           type: string
           description: スタンプ名
           example: "Gopher基礎"
           maxLength: 100
-        image:
-          type: string
-          description: スタンプ画像URL
-          example: "https://example.com/stamps/gopher-basic.png"
-          maxLength: 500
 
     StampUpdateRequest:
       type: object
-      description: スタンプ更新リクエスト。nameとimageの少なくとも1つは必須。
+      description: スタンプ更新リクエスト。
       properties:
         name:
           type: string
           description: スタンプ名
           example: "Gopher基礎"
           maxLength: 100
-        image:
-          type: string
-          description: スタンプ画像URL
-          example: "https://example.com/stamps/gopher-basic.png"
-          maxLength: 500
-      minProperties: 1
 
     UserStamp:
       type: object
@@ -658,13 +638,15 @@ components:
           description: ユーザーID
           example: 1
         stamp_id:
-          type: array
-          description: スタンプIDの配列
-          items:
             type: integer
             format: int64
             description: スタンプID
             example: 1
+        acquired_at:
+          type: string
+          format: date-time
+          description: スタンプ取得日時
+          example: "2023-01-01T00:00:00Z"
 
     AcquireStampRequest:
       type: object

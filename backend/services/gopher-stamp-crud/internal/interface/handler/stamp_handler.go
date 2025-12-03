@@ -46,7 +46,6 @@ func (h *StampHandler) ListStamps(c *gin.Context, params openapi.ListStampsParam
 		response[i] = openapi.Stamp{
 			Id:        int64(stamp.ID),
 			Name:      stamp.Name,
-			Image:     stamp.Image,
 			CreatedAt: &stamp.CreatedAt,
 			UpdatedAt: &stamp.UpdatedAt,
 		}
@@ -71,7 +70,7 @@ func (h *StampHandler) CreateStamp(c *gin.Context) {
 		return
 	}
 
-	stamp, err := h.stampUseCase.CreateStamp(c.Request.Context(), req.Name, req.Image)
+	stamp, err := h.stampUseCase.CreateStamp(c.Request.Context(), req.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
@@ -83,7 +82,6 @@ func (h *StampHandler) CreateStamp(c *gin.Context) {
 	response := openapi.Stamp{
 		Id:        int64(stamp.ID),
 		Name:      stamp.Name,
-		Image:     stamp.Image,
 		CreatedAt: &stamp.CreatedAt,
 		UpdatedAt: &stamp.UpdatedAt,
 	}
@@ -112,7 +110,6 @@ func (h *StampHandler) GetStamp(c *gin.Context, id int64) {
 	response := openapi.Stamp{
 		Id:        int64(stamp.ID),
 		Name:      stamp.Name,
-		Image:     stamp.Image,
 		CreatedAt: &stamp.CreatedAt,
 		UpdatedAt: &stamp.UpdatedAt,
 	}
@@ -133,7 +130,7 @@ func (h *StampHandler) UpdateStamp(c *gin.Context, id int64) {
 		return
 	}
 
-	stamp, err := h.stampUseCase.UpdateStamp(c.Request.Context(), uint(id), req.Name, req.Image)
+	stamp, err := h.stampUseCase.UpdateStamp(c.Request.Context(), uint(id), req.Name)
 	if err != nil {
 		if err.Error() == "stamp not found" {
 			c.JSON(http.StatusNotFound, openapi.Error{
@@ -142,11 +139,11 @@ func (h *StampHandler) UpdateStamp(c *gin.Context, id int64) {
 			})
 			return
 		}
-		if err.Error() == "at least one of name or image must be provided" {
+		if err.Error() == "name must be provided" {
 			errMsg := err.Error()
 			c.JSON(http.StatusBadRequest, openapi.Error{
 				Code:    "INVALID_REQUEST",
-				Message: "At least one of name or image must be provided",
+				Message: "name must be provided",
 				Details: &errMsg,
 			})
 			return
@@ -161,7 +158,6 @@ func (h *StampHandler) UpdateStamp(c *gin.Context, id int64) {
 	response := openapi.Stamp{
 		Id:        int64(stamp.ID),
 		Name:      stamp.Name,
-		Image:     stamp.Image,
 		CreatedAt: &stamp.CreatedAt,
 		UpdatedAt: &stamp.UpdatedAt,
 	}

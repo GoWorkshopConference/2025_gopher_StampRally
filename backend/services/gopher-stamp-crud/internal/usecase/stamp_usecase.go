@@ -13,8 +13,8 @@ import (
 type StampUseCase interface {
 	ListStamps(ctx context.Context, limit, offset int) ([]entity.Stamp, int64, error)
 	GetStamp(ctx context.Context, id uint) (*entity.Stamp, error)
-	CreateStamp(ctx context.Context, name, image string) (*entity.Stamp, error)
-	UpdateStamp(ctx context.Context, id uint, name, image *string) (*entity.Stamp, error)
+	CreateStamp(ctx context.Context, name string) (*entity.Stamp, error)
+	UpdateStamp(ctx context.Context, id uint, name *string) (*entity.Stamp, error)
 	DeleteStamp(ctx context.Context, id uint) error
 }
 
@@ -53,10 +53,9 @@ func (uc *stampUseCase) GetStamp(ctx context.Context, id uint) (*entity.Stamp, e
 	return stamp, nil
 }
 
-func (uc *stampUseCase) CreateStamp(ctx context.Context, name, image string) (*entity.Stamp, error) {
+func (uc *stampUseCase) CreateStamp(ctx context.Context, name string) (*entity.Stamp, error) {
 	stamp := &entity.Stamp{
-		Name:  name,
-		Image: image,
+		Name: name,
 	}
 
 	if err := uc.stampRepo.Create(ctx, stamp); err != nil {
@@ -66,10 +65,10 @@ func (uc *stampUseCase) CreateStamp(ctx context.Context, name, image string) (*e
 	return stamp, nil
 }
 
-func (uc *stampUseCase) UpdateStamp(ctx context.Context, id uint, name, image *string) (*entity.Stamp, error) {
-	// バリデーション: 両方nilの場合はエラー
-	if name == nil && image == nil {
-		return nil, errors.New("at least one of name or image must be provided")
+func (uc *stampUseCase) UpdateStamp(ctx context.Context, id uint, name *string) (*entity.Stamp, error) {
+	// バリデーション: nameがnilの場合はエラー
+	if name == nil {
+		return nil, errors.New("name must be provided")
 	}
 
 	stamp, err := uc.stampRepo.FindByID(ctx, id)
@@ -80,12 +79,7 @@ func (uc *stampUseCase) UpdateStamp(ctx context.Context, id uint, name, image *s
 		return nil, err
 	}
 
-	if name != nil {
-		stamp.Name = *name
-	}
-	if image != nil {
-		stamp.Image = *image
-	}
+	stamp.Name = *name
 
 	if err := uc.stampRepo.Update(ctx, stamp); err != nil {
 		return nil, err

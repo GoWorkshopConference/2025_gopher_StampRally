@@ -58,7 +58,7 @@ func TestUserUsecase_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.Create(context.Background(), tt.userName)
+			got, err := usecase.Create(context.Background(), tt.userName, nil, nil, nil)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -202,18 +202,26 @@ func TestUserUsecase_Update(t *testing.T) {
 	mockRepo := mock.NewMockUserRepository(ctrl)
 	usecase := NewUserUsecase(mockRepo)
 
+	updatedName := "Updated User"
+	updatedTwitterID := "updated_twitter"
+	updatedFavoriteGoFeature := "CONCURRENCY"
+	updatedIcon := "data:image/png;base64,..."
+
 	tests := []struct {
-		name     string
-		id       uint
-		userName string
-		mockFn   func()
-		want     *entity.User
-		wantErr  bool
+		testName          string
+		id                uint
+		name              *string
+		twitterID         *string
+		favoriteGoFeature *string
+		icon              *string
+		mockFn            func()
+		want              *entity.User
+		wantErr           bool
 	}{
 		{
-			name:     "success",
+			testName: "success - update name only",
 			id:       1,
-			userName: "Updated User",
+			name:     &updatedName,
 			mockFn: func() {
 				mockRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
@@ -234,9 +242,38 @@ func TestUserUsecase_Update(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:     "user not found",
+			testName:          "success - update all fields",
+			id:                1,
+			name:              &updatedName,
+			twitterID:         &updatedTwitterID,
+			favoriteGoFeature: &updatedFavoriteGoFeature,
+			icon:              &updatedIcon,
+			mockFn: func() {
+				mockRepo.EXPECT().
+					FindByID(gomock.Any(), uint(1)).
+					Return(&entity.User{
+						ID:   1,
+						Name: "Original User",
+					}, nil)
+				mockRepo.EXPECT().
+					Update(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(ctx context.Context, user *entity.User) error {
+						return nil
+					})
+			},
+			want: &entity.User{
+				ID:                1,
+				Name:              "Updated User",
+				TwitterID:         &updatedTwitterID,
+				FavoriteGoFeature: &updatedFavoriteGoFeature,
+				Icon:              &updatedIcon,
+			},
+			wantErr: false,
+		},
+		{
+			testName: "user not found",
 			id:       999,
-			userName: "Updated User",
+			name:     &updatedName,
 			mockFn: func() {
 				mockRepo.EXPECT().
 					FindByID(gomock.Any(), uint(999)).
@@ -246,9 +283,9 @@ func TestUserUsecase_Update(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "update error",
+			testName: "update error",
 			id:       1,
-			userName: "Updated User",
+			name:     &updatedName,
 			mockFn: func() {
 				mockRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
@@ -266,15 +303,25 @@ func TestUserUsecase_Update(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.testName, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.Update(context.Background(), tt.id, tt.userName)
+			got, err := usecase.Update(context.Background(), tt.id, tt.name, tt.twitterID, tt.favoriteGoFeature, tt.icon)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				assert.Equal(t, tt.want.ID, got.ID)
+				assert.Equal(t, tt.want.Name, got.Name)
+				if tt.want.TwitterID != nil {
+					assert.Equal(t, tt.want.TwitterID, got.TwitterID)
+				}
+				if tt.want.FavoriteGoFeature != nil {
+					assert.Equal(t, tt.want.FavoriteGoFeature, got.FavoriteGoFeature)
+				}
+				if tt.want.Icon != nil {
+					assert.Equal(t, tt.want.Icon, got.Icon)
+				}
 			}
 		})
 	}

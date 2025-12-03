@@ -39,16 +39,16 @@ func TestStampUseCase_ListStamps(t *testing.T) {
 				mockRepo.EXPECT().
 					FindAll(gomock.Any(), 10, 0).
 					Return([]entity.Stamp{
-						{ID: 1, Name: "Stamp 1", Image: "image1.png", CreatedAt: now, UpdatedAt: now},
-						{ID: 2, Name: "Stamp 2", Image: "image2.png", CreatedAt: now, UpdatedAt: now},
+						{ID: 1, Name: "Stamp 1", CreatedAt: now, UpdatedAt: now},
+						{ID: 2, Name: "Stamp 2", CreatedAt: now, UpdatedAt: now},
 					}, nil)
 				mockRepo.EXPECT().
 					Count(gomock.Any()).
 					Return(int64(2), nil)
 			},
 			wantStamps: []entity.Stamp{
-				{ID: 1, Name: "Stamp 1", Image: "image1.png", CreatedAt: now, UpdatedAt: now},
-				{ID: 2, Name: "Stamp 2", Image: "image2.png", CreatedAt: now, UpdatedAt: now},
+				{ID: 1, Name: "Stamp 1", CreatedAt: now, UpdatedAt: now},
+				{ID: 2, Name: "Stamp 2", CreatedAt: now, UpdatedAt: now},
 			},
 			wantTotal: 2,
 			wantErr:   false,
@@ -61,14 +61,14 @@ func TestStampUseCase_ListStamps(t *testing.T) {
 				mockRepo.EXPECT().
 					FindAll(gomock.Any(), 5, 5).
 					Return([]entity.Stamp{
-						{ID: 6, Name: "Stamp 6", Image: "image6.png", CreatedAt: now, UpdatedAt: now},
+						{ID: 6, Name: "Stamp 6", CreatedAt: now, UpdatedAt: now},
 					}, nil)
 				mockRepo.EXPECT().
 					Count(gomock.Any()).
 					Return(int64(10), nil)
 			},
 			wantStamps: []entity.Stamp{
-				{ID: 6, Name: "Stamp 6", Image: "image6.png", CreatedAt: now, UpdatedAt: now},
+				{ID: 6, Name: "Stamp 6", CreatedAt: now, UpdatedAt: now},
 			},
 			wantTotal: 10,
 			wantErr:   false,
@@ -163,7 +163,6 @@ func TestStampUseCase_GetStamp(t *testing.T) {
 					Return(&entity.Stamp{
 						ID:        1,
 						Name:      "Test Stamp",
-						Image:     "test.png",
 						CreatedAt: now,
 						UpdatedAt: now,
 					}, nil)
@@ -171,7 +170,6 @@ func TestStampUseCase_GetStamp(t *testing.T) {
 			want: &entity.Stamp{
 				ID:        1,
 				Name:      "Test Stamp",
-				Image:     "test.png",
 				CreatedAt: now,
 				UpdatedAt: now,
 			},
@@ -230,14 +228,12 @@ func TestStampUseCase_CreateStamp(t *testing.T) {
 	tests := []struct {
 		name    string
 		inName  string
-		inImage string
 		mockFn  func()
 		wantErr bool
 	}{
 		{
-			name:    "success",
-			inName:  "New Stamp",
-			inImage: "new.png",
+			name:   "success",
+			inName: "New Stamp",
 			mockFn: func() {
 				mockRepo.EXPECT().
 					Create(gomock.Any(), gomock.Any()).
@@ -249,9 +245,8 @@ func TestStampUseCase_CreateStamp(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "create error",
-			inName:  "Failed Stamp",
-			inImage: "failed.png",
+			name:   "create error",
+			inName: "Failed Stamp",
 			mockFn: func() {
 				mockRepo.EXPECT().
 					Create(gomock.Any(), gomock.Any()).
@@ -264,7 +259,7 @@ func TestStampUseCase_CreateStamp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			stamp, err := usecase.CreateStamp(context.Background(), tt.inName, tt.inImage)
+			stamp, err := usecase.CreateStamp(context.Background(), tt.inName)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, stamp)
@@ -272,7 +267,6 @@ func TestStampUseCase_CreateStamp(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, stamp)
 				assert.Equal(t, tt.inName, stamp.Name)
-				assert.Equal(t, tt.inImage, stamp.Image)
 			}
 		})
 	}
@@ -287,30 +281,26 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 
 	now := time.Now()
 	newName := "Updated Name"
-	newImage := "updated.png"
 
 	tests := []struct {
 		name    string
 		id      uint
 		inName  *string
-		inImage *string
 		mockFn  func()
 		want    *entity.Stamp
 		wantErr bool
 		errMsg  string
 	}{
 		{
-			name:    "success - update both fields",
-			id:      1,
-			inName:  &newName,
-			inImage: &newImage,
+			name:   "success - update name",
+			id:     1,
+			inName: &newName,
 			mockFn: func() {
 				mockRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.Stamp{
 						ID:        1,
 						Name:      "Original Name",
-						Image:     "original.png",
 						CreatedAt: now,
 						UpdatedAt: now,
 					}, nil)
@@ -321,7 +311,6 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 			want: &entity.Stamp{
 				ID:        1,
 				Name:      "Updated Name",
-				Image:     "updated.png",
 				CreatedAt: now,
 				UpdatedAt: now,
 			},
@@ -337,7 +326,6 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 					Return(&entity.Stamp{
 						ID:        1,
 						Name:      "Original Name",
-						Image:     "original.png",
 						CreatedAt: now,
 						UpdatedAt: now,
 					}, nil)
@@ -348,34 +336,6 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 			want: &entity.Stamp{
 				ID:        1,
 				Name:      "Updated Name",
-				Image:     "original.png",
-				CreatedAt: now,
-				UpdatedAt: now,
-			},
-			wantErr: false,
-		},
-		{
-			name:    "success - update image only",
-			id:      1,
-			inImage: &newImage,
-			mockFn: func() {
-				mockRepo.EXPECT().
-					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{
-						ID:        1,
-						Name:      "Original Name",
-						Image:     "original.png",
-						CreatedAt: now,
-						UpdatedAt: now,
-					}, nil)
-				mockRepo.EXPECT().
-					Update(gomock.Any(), gomock.Any()).
-					Return(nil)
-			},
-			want: &entity.Stamp{
-				ID:        1,
-				Name:      "Original Name",
-				Image:     "updated.png",
 				CreatedAt: now,
 				UpdatedAt: now,
 			},
@@ -404,7 +364,6 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 					Return(&entity.Stamp{
 						ID:        1,
 						Name:      "Original Name",
-						Image:     "original.png",
 						CreatedAt: now,
 						UpdatedAt: now,
 					}, nil)
@@ -416,14 +375,14 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "validation error - both nil",
+			name: "validation error - name is nil",
 			id:   1,
 			mockFn: func() {
 				// バリデーションで早期リターンするため、Repoのモックは呼ばれない
 			},
 			want:    nil,
 			wantErr: true,
-			errMsg:  "at least one of name or image must be provided",
+			errMsg:  "name must be provided",
 		},
 		{
 			name:   "database error on FindByID",
@@ -442,7 +401,7 @@ func TestStampUseCase_UpdateStamp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.UpdateStamp(context.Background(), tt.id, tt.inName, tt.inImage)
+			got, err := usecase.UpdateStamp(context.Background(), tt.id, tt.inName)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)
@@ -482,7 +441,6 @@ func TestStampUseCase_DeleteStamp(t *testing.T) {
 					Return(&entity.Stamp{
 						ID:        1,
 						Name:      "Test Stamp",
-						Image:     "test.png",
 						CreatedAt: now,
 						UpdatedAt: now,
 					}, nil)
@@ -522,7 +480,6 @@ func TestStampUseCase_DeleteStamp(t *testing.T) {
 					Return(&entity.Stamp{
 						ID:        1,
 						Name:      "Test Stamp",
-						Image:     "test.png",
 						CreatedAt: now,
 						UpdatedAt: now,
 					}, nil)
