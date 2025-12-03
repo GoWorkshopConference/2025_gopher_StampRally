@@ -70,7 +70,6 @@ export const stampsAtom = atom<Stamp[]>((get) => {
     return apiStamps.map(stamp => ({
         id: stamp.id,
         name: stamp.name,
-        image: stamp.image,
         isCollected: acquiredIds.has(stamp.id),
     }));
 });
@@ -89,16 +88,22 @@ export const participantsAtom = atom<Participant[]>((get) => {
     const totalStamps = get(apiStampsAtom).length;
     const acquiredIds = get(acquiredStampIdsAtom);
 
-    const participantsFromApi: Participant[] = apiUsers.map(user => ({
-        id: user.id,
-        name: user.name,
-        completedCount: stampCounts[user.id] ?? 0,
-        totalCount: totalStamps,
-        profileImageUrl: user.icon,
-        isMine: false,
-        twitter_id: user.twitter_id,
-    }));
+    const myUserId = profile ? Number(profile.id) : null;
 
+    // APIから取得したユーザー一覧から「自分自身」は除外する
+    const participantsFromApi: Participant[] = apiUsers
+        .filter(user => myUserId === null || user.id !== myUserId)
+        .map(user => ({
+            id: user.id,
+            name: user.name,
+            completedCount: stampCounts[user.id] ?? 0,
+            totalCount: totalStamps,
+            profileImageUrl: user.icon,
+            isMine: false,
+            twitter_id: user.twitter_id,
+        }));
+
+    // 自分のプロフィールを一番上に追加
     if (profile) {
         const myParticipant: Participant = {
             id: MY_PROFILE_ID,
@@ -107,6 +112,7 @@ export const participantsAtom = atom<Participant[]>((get) => {
             totalCount: totalStamps,
             profileImageUrl: profile.profileImageUrl,
             isMine: true,
+            twitter_id: profile.twitterId,
         };
         return [myParticipant, ...participantsFromApi];
     }

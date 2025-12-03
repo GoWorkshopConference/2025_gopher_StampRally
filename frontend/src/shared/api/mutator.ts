@@ -1,50 +1,64 @@
-// Custom fetch instance for Orval
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-export const customInstance = async <T>(
-  config: RequestInit & { url: string; params?: Record<string, unknown> },
-  options?: RequestInit,
-): Promise<T> => {
-  let url = `${API_BASE_URL}${config.url}`;
+export const customInstance = async <T>(config: {
+  url: string;
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  params?: Record<string, any>;
+  data?: any;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+}): Promise<T> => {
+  const { url, method, params, data, headers = {}, signal } = config;
 
-  // クエリパラメータを処理
-  if (config.params) {
-    const params = new URLSearchParams();
-    Object.entries(config.params).forEach(([key, value]) => {
+  // URLにクエリパラメータを追加
+  let requestUrl = `${API_BASE_URL}${url}`;
+  if (params) {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        params.append(key, String(value));
+        queryParams.append(key, String(value));
       }
     });
-    const queryString = params.toString();
+    const queryString = queryParams.toString();
     if (queryString) {
-      url += `?${queryString}`;
+      requestUrl += `?${queryString}`;
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    ...config,
+  const requestOptions: RequestInit = {
+    method,
     headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-      ...config.headers,
+      "Content-Type": "application/json",
+      ...headers,
     },
-  });
+    signal,
+  };
+
+  if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
+    requestOptions.body = JSON.stringify(data);
+  }
+
+  const response = await fetch(requestUrl, requestOptions);
 
   if (!response.ok) {
-    let errorMessage = `API Error: ${response.status} ${response.statusText}`;
-    try {
-      const errorBody = await response.text();
-      console.error('API Error Response:', errorBody);
-      errorMessage += `\nResponse: ${errorBody}`;
-    } catch (e) {
-      console.error('Could not read error response body');
-    }
-    throw new Error(errorMessage);
+    const error = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+  }
+
+  // 204 No Contentなどの場合は空のオブジェクトを返す
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return {} as T;
   }
 
   return response.json();
 };
 
-export default customInstance;
-
+// 後方互換性のためのmutator関数
+export async function mutator<T>(url: string, options?: RequestInit): Promise<T> {
+  return customInstance<T>({
+    url,
+    method: (options?.method as any) || "GET",
+    data: options?.body ? JSON.parse(options.body as string) : undefined,
+    headers: options?.headers as Record<string, string>,
+  });
+}

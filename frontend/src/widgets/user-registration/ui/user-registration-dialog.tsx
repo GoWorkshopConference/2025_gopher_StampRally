@@ -7,10 +7,11 @@ import {Input} from "@/shared/ui/input";
 import {Label} from "@/shared/ui/label";
 import {Checkbox} from "@/shared/ui/checkbox";
 import {useSetAtom} from "jotai";
-import {GOLANG_POINTS, UserProfile} from "@/shared/types/user";
+import {GOLANG_POINTS, GOLANG_POINT_CODE_MAP, UserProfile} from "@/shared/types/user";
 import {generateUserId} from "@/shared/lib/storage";
 import {userProfileAtom} from "@/shared/store/atoms";
 import {ImageWithFallback} from "@/shared/lib/ImageWithFallback";
+import {createUser} from "@/shared/api/generated/users/users";
 
 interface UserRegistrationDialogProps {
     open: boolean;
@@ -24,6 +25,7 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
     const [profileImageUrl, setProfileImageUrl] = useState("");
     const [selectedPoints, setSelectedPoints] = useState<string[]>([]);
     const [imagePreview, setImagePreview] = useState<string>("");
+    const [isFileUploaded, setIsFileUploaded] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,6 +36,7 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
                 const result = reader.result as string;
                 setImagePreview(result);
                 setProfileImageUrl(result);
+                setIsFileUploaded(true); // ファイルアップロード時はURL入力欄を非表示
             };
             reader.readAsDataURL(file);
         }
@@ -56,18 +59,52 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
             return;
         }
 
-        const profile: UserProfile = {
-            id: generateUserId(),
-            nickname: nickname.trim(),
-            twitterId: twitterId.trim(),
-            profileImageUrl: profileImageUrl || "",
-            favoriteGolangPoints: selectedPoints,
-            completedCount: 0,
-            totalCount: 0, // APIから取得した総数で後で更新される
-        };
+        try {
+            // 画像の処理: URLの場合はそのまま保存、base64（ファイルアップロード）の場合はそのまま保存
+            let iconValue = "";
+            if (profileImageUrl && profileImageUrl.trim()) {
+                // http://またはhttps://で始まる場合はURLとしてそのまま保存
+                if (profileImageUrl.startsWith("http://") || profileImageUrl.startsWith("https://")) {
+                    iconValue = profileImageUrl.trim();
+                } else if (profileImageUrl.startsWith("data:")) {
+                    // base64（ファイルアップロード）の場合はそのまま保存
+                    iconValue = profileImageUrl;
+                } else {
+                    // その他の場合は空文字列
+                    iconValue = "";
+                }
+            }
 
-        setUserProfile(profile);
-        onComplete(profile);
+            // バックエンドに保存する値は「コード」（英数字）に変換する
+            const favoriteGoFeatureCodes = selectedPoints.map((label) => GOLANG_POINT_CODE_MAP[label as keyof typeof GOLANG_POINT_CODE_MAP] ?? label);
+            const favoriteGoFeature = favoriteGoFeatureCodes.join(",");
+            const apiUser = await createUser(
+                {
+                    name: nickname.trim(),
+                    twitter_id: twitterId.trim(),
+                    favorite_go_feature: favoriteGoFeature,
+                    icon: iconValue || undefined,
+                },
+            );
+
+            // バックエンドのユーザーIDをフロントのプロフィールに反映
+            // LocalStorageにはURLまたはbase64画像を保存
+            const profile: UserProfile = {
+                id: String(apiUser.id),
+                nickname: apiUser.name,
+                twitterId: apiUser.twitter_id ?? twitterId.trim(),
+                profileImageUrl: iconValue || "",
+                favoriteGolangPoints: selectedPoints,
+                completedCount: 0,
+                totalCount: 0, // APIから取得した総数で後で更新される
+            };
+
+            setUserProfile(profile);
+            onComplete(profile);
+        } catch (error) {
+            console.error("Failed to register user:", error);
+            alert("ユーザー登録に失敗しました。時間をおいて再度お試しください。");
+        }
     };
 
     return (
@@ -137,26 +174,30 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
                                 onChange={handleImageSelect}
                             />
                         </div>
-                        <Input
-                            id="profileImageUrl"
-                            placeholder="画像URL（オプション）"
-                            value={profileImageUrl.startsWith("data:") ? "" : profileImageUrl}
-                            onChange={(e) => {
-                                const url = e.target.value;
-                                setProfileImageUrl(url);
-                                // URLが空でない場合のみプレビューを更新
-                                // 空の場合は、ファイルから選択された画像を保持
-                                if (url) {
-                                    setImagePreview(url);
-                                } else if (!imagePreview.startsWith("data:")) {
-                                    // ファイル選択の画像がない場合はクリア
-                                    setImagePreview("");
-                                }
-                            }}
-                            className="bg-white text-gray-900 border-gray-300"
-                        />
+                        {!isFileUploaded && (
+                            <Input
+                                id="profileImageUrl"
+                                placeholder="画像URL（オプション）"
+                                value={profileImageUrl}
+                                onChange={(e) => {
+                                    const url = e.target.value;
+                                    setProfileImageUrl(url);
+                                    // URLが空でない場合のみプレビューを更新
+                                    if (url) {
+                                        setImagePreview(url);
+                                    } else {
+                                        setImagePreview("");
+                                    }
+                                    // URLを入力した場合は、ファイルアップロード状態を解除
+                                    setIsFileUploaded(false);
+                                }}
+                                className="bg-white text-gray-900 border-gray-300"
+                            />
+                        )}
                         <p className="text-xs text-gray-500">
-                            ファイルを選択するか、画像のURLを入力してください
+                            {isFileUploaded
+                                ? "画像をアップロードしました。別の画像を選択する場合は、再度「画像を選択」ボタンをクリックしてください。"
+                                : "ファイルを選択するか、画像のURLを入力してください"}
                         </p>
                     </div>
 
@@ -188,7 +229,6 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
                         </p>
                     </div>
                 </div>
-
                 <DialogFooter>
                     <Button
                         onClick={handleSubmit}

@@ -38,9 +38,6 @@ type Stamp struct {
 	// Id スタンプID
 	Id int64 `json:"id"`
 
-	// Image スタンプ画像URL
-	Image string `json:"image"`
-
 	// Name スタンプ名
 	Name string `json:"name"`
 
@@ -50,18 +47,12 @@ type Stamp struct {
 
 // StampCreateRequest defines model for StampCreateRequest.
 type StampCreateRequest struct {
-	// Image スタンプ画像URL
-	Image string `json:"image"`
-
 	// Name スタンプ名
 	Name string `json:"name"`
 }
 
-// StampUpdateRequest スタンプ更新リクエスト。nameとimageの少なくとも1つは必須。
+// StampUpdateRequest スタンプ更新リクエスト。
 type StampUpdateRequest struct {
-	// Image スタンプ画像URL
-	Image *string `json:"image,omitempty"`
-
 	// Name スタンプ名
 	Name *string `json:"name,omitempty"`
 }

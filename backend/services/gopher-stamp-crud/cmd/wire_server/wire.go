@@ -9,6 +9,7 @@ import (
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/usecase"
 	openapi "2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"gorm.io/gorm"
@@ -60,6 +61,27 @@ func InitializeServer() (*gin.Engine, error) {
 // NewGinEngine creates a new gin.Engine with handlers registered
 func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r := gin.Default()
+
+	// CORS settings: allow frontend origin
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{
+		"http://localhost:3000",
+	}
+	corsConfig.AllowCredentials = true
+	// Allow common methods and headers (Authorization etc.)
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	r.Use(cors.New(corsConfig))
+
+	// Health check endpoint (supports both GET and HEAD for Docker healthcheck)
+	healthHandler := func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
+	}
+	r.GET("/health", healthHandler)
+	r.HEAD("/health", healthHandler)
+
 	openapi.RegisterHandlers(r, h)
 	return r
 }

@@ -14,6 +14,7 @@ import {
 } from "@/shared/api/stamp-api";
 import { logMockMode } from "@/shared/api/mock-client";
 import type { Stamp } from "@/shared/api/generated/api.schemas";
+import { getStampImagePath } from "@/shared/lib/stamp-image";
 
 type AcquisitionState = "loading" | "acquiring" | "success" | "error" | "already_acquired";
 
@@ -116,7 +117,8 @@ export default function AcquireStampPage() {
       const img = new Image();
       img.crossOrigin = 'anonymous';
 
-      console.log('[IMAGE] Loading stamp image from:', stamp.image);
+      const imagePath = getStampImagePath(stamp.name);
+      console.log('[IMAGE] Loading stamp image from:', imagePath);
 
       return new Promise((resolve) => {
         img.onload = () => {
@@ -130,12 +132,25 @@ export default function AcquireStampPage() {
           roundRect(ctx, 30, 110, 340, 290, 16);
           ctx.fill();
 
-          // スタンプ画像
-          const imgSize = 160;
-          const imgX = (width - imgSize) / 2;
-          const imgY = 130;
-          ctx.drawImage(img, imgX, imgY, imgSize, imgSize);
-          console.log('[IMAGE] Stamp image drawn at', { imgX, imgY, imgSize });
+          // スタンプ画像（アスペクト比を保持）
+          const maxSize = 160;
+          const imgAspectRatio = img.naturalWidth / img.naturalHeight;
+          let drawWidth = maxSize;
+          let drawHeight = maxSize;
+
+          // アスペクト比を保持してサイズを計算
+          if (imgAspectRatio > 1) {
+            // 横長の場合
+            drawHeight = maxSize / imgAspectRatio;
+          } else {
+            // 縦長または正方形の場合
+            drawWidth = maxSize * imgAspectRatio;
+          }
+
+          const imgX = (width - drawWidth) / 2;
+          const imgY = 130 + (maxSize - drawHeight) / 2;
+          ctx.drawImage(img, imgX, imgY, drawWidth, drawHeight);
+          console.log('[IMAGE] Stamp image drawn at', { imgX, imgY, drawWidth, drawHeight, originalSize: { width: img.naturalWidth, height: img.naturalHeight } });
 
           // スタンプ名
           ctx.fillStyle = '#1f2937';
@@ -224,7 +239,7 @@ export default function AcquireStampPage() {
           }, 'image/png');
         };
 
-        img.src = stamp.image;
+        img.src = imagePath;
         console.log('[IMAGE] Image loading started');
       });
     } catch (error) {
@@ -257,17 +272,40 @@ export default function AcquireStampPage() {
     console.log('[DOWNLOAD] Download triggered:', filename);
   };
 
+  // 画像をクリップボードにコピー
+  const copyImageToClipboard = async (blob: Blob): Promise<boolean> => {
+    try {
+      // Clipboard APIを使用して画像をコピー
+      if (navigator.clipboard && navigator.clipboard.write) {
+        const item = new ClipboardItem({
+          'image/png': blob,
+        });
+        await navigator.clipboard.write([item]);
+        console.log('[SHARE] Image copied to clipboard');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('[SHARE] Failed to copy image to clipboard:', error);
+      return false;
+    }
+  };
+
   // Xでシェア（Web Share API使用可能な場合は直接共有）
   const shareOnX = async () => {
     const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp?.name}」をGETしました！ #GoWorkshopConference`;
 
-    // Web Share API が使用可能かチェック
-    if (navigator.share && navigator.canShare) {
-      try {
-        console.log('[SHARE] Attempting Web Share API...');
-        const blob = await generateCardImage();
+    try {
+      const blob = await generateCardImage();
+      if (!blob) {
+        alert('画像の生成に失敗しました');
+        return;
+      }
 
-        if (blob) {
+      // Web Share API が使用可能かチェック（モバイルなど）
+      if (navigator.share && navigator.canShare) {
+        try {
+          console.log('[SHARE] Attempting Web Share API...');
           const file = new File([blob], `gopher-stamp-${stampId}.png`, { type: 'image/png' });
           const shareData = {
             text: text,
@@ -280,21 +318,31 @@ export default function AcquireStampPage() {
             await navigator.share(shareData);
             return;
           }
+        } catch (error) {
+          console.log('[SHARE] Web Share API failed, trying clipboard method:', error);
         }
-      } catch (error) {
-        console.log('[SHARE] Web Share API failed, falling back to Twitter Intent:', error);
       }
+
+      // クリップボードに画像をコピー
+      const copied = await copyImageToClipboard(blob);
+
+      if (copied) {
+        // 画像をコピーできた場合
+        alert('画像をクリップボードにコピーしました！\nXを開いて画像を貼り付けてください。');
+        // Xを開く
+        setTimeout(() => {
+          const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+          window.open(twitterUrl, '_blank', 'width=550,height=420');
+        }, 500);
+      } else {
+        // クリップボードにコピーできない場合
+        console.log('[SHARE] Clipboard API not available');
+        alert('このブラウザでは画像をクリップボードにコピーできません。\n別のブラウザでお試しください。');
+      }
+    } catch (error) {
+      console.error('[SHARE] Share failed:', error);
+      alert('シェアに失敗しました。時間をおいて再度お試しください。');
     }
-
-    // フォールバック: 画像をダウンロード → Twitter Intentを開く
-    console.log('[SHARE] Using Twitter Web Intent (manual image attach required)');
-    await downloadCardImage();
-
-    // 少し待ってからXを開く
-    setTimeout(() => {
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-      window.open(twitterUrl, '_blank', 'width=550,height=420');
-    }, 300);
   };
 
   // LocalStorageから直接ユーザープロフィールを取得
@@ -554,7 +602,7 @@ export default function AcquireStampPage() {
             <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 mb-4">
               <div className="flex justify-center mb-4">
                 <img
-                  src={stamp.image}
+                  src={getStampImagePath(stamp.name)}
                   alt={stamp.name}
                   className="w-40 h-40 object-contain rounded-lg"
                   onError={(e) => {
@@ -598,9 +646,9 @@ export default function AcquireStampPage() {
 
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
               <p className="text-white text-xs text-center">
-                💡 モバイル: 画像を直接共有
+                💡 モバイル: 画像を直接共有できます
                 <br />
-                PC: 画像をダウンロード後、Xの画面で手動添付してください
+                PC: 画像をクリップボードにコピーして、Xで貼り付けてください
               </p>
             </div>
 
@@ -636,7 +684,7 @@ export default function AcquireStampPage() {
               <div className="bg-amber-50 rounded-2xl p-6 mb-6">
                 <div className="flex justify-center mb-4">
                   <img
-                    src={stamp.image}
+                    src={getStampImagePath(stamp.name)}
                     alt={stamp.name}
                     className="w-32 h-32 object-contain rounded-lg opacity-75"
                     onError={(e) => {

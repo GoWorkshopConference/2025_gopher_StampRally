@@ -1,120 +1,35 @@
-/**
- * スタンプAPI クライアント
- * Swagger定義に基づいたAPI呼び出しラッパー
- */
-
+import { listStamps, getStamp } from "./generated/stamps/stamps";
 import { acquireStamp } from "./generated/user-stamps/user-stamps";
-import { getStamp, listStamps } from "./generated/stamps/stamps";
-import { mockGetStamp, mockAcquireStamp, isMockMode } from "./mock-client";
-import type { Stamp, AcquireStampRequest, UserStamp } from "./generated/api.schemas";
+import type { AcquireStampRequest, UserStamp, Stamp } from "./generated/api.schemas";
 
-/**
- * スタンプ詳細取得
- * GET /stamps/{id}
- * 
- * @param stampId - スタンプID
- * @returns スタンプ詳細
- * @throws 404: スタンプが見つからない
- * @throws 500: サーバーエラー
- */
-export async function fetchStampDetail(stampId: number): Promise<Stamp> {
-  try {
-    if (isMockMode()) {
-      console.log(`[STAMP API] Fetching stamp detail (MOCK): ${stampId}`);
-      return await mockGetStamp(stampId);
-    }
-
-    console.log(`[STAMP API] Fetching stamp detail: ${stampId}`);
-    return await getStamp(stampId);
-  } catch (error) {
-    console.error(`[STAMP API] Failed to fetch stamp ${stampId}:`, error);
-    throw error;
-  }
+export async function fetchStampList(limit: number = 100, offset: number = 0) {
+  const response = await listStamps({ limit, offset });
+  return {
+    stamps: response.stamps || [],
+    total: response.total || 0,
+  };
 }
 
-/**
- * スタンプ一覧取得
- * GET /stamps
- * 
- * @param limit - 取得件数（デフォルト: 100）
- * @param offset - オフセット（デフォルト: 0）
- * @returns スタンプ一覧
- */
-export async function fetchStampList(
-  limit: number = 100,
-  offset: number = 0
-): Promise<{ stamps: Stamp[]; total: number }> {
-  try {
-    console.log(`[STAMP API] Fetching stamp list (limit: ${limit}, offset: ${offset})`);
-    const response = await listStamps({ limit, offset });
-    
-    return {
-      stamps: response.stamps || [],
-      total: response.total || 0,
-    };
-  } catch (error) {
-    console.error("[STAMP API] Failed to fetch stamp list:", error);
-    throw error;
-  }
+export async function fetchStampDetail(stampId: number): Promise<{ id: number; name: string }> {
+  const stamp = await getStamp(stampId);
+  return {
+    id: stamp.id,
+    name: stamp.name,
+  };
 }
 
 /**
  * スタンプ取得API
  * POST /users/{user_id}/stamps
- * 
- * Swagger定義:
- * - operationId: acquireStamp
- * - summary: ユーザーがスタンプを取得
- * - description: ユーザーが新しいスタンプを取得する
- * 
- * @param userId - ユーザーID
- * @param stampId - 取得するスタンプのID
- * @returns 取得結果
- * @throws 400: リクエストが不正
- * @throws 404: ユーザーまたはスタンプが見つからない
- * @throws 409: 既に取得済みのスタンプ
- * @throws 500: サーバーエラー
  */
 export async function acquireStampApi(
   userId: number,
   stampId: number
 ): Promise<UserStamp> {
-  try {
-    const request: AcquireStampRequest = {
-      stamp_id: stampId,
-    };
-
-    if (isMockMode()) {
-      console.log(`[STAMP API] Acquiring stamp (MOCK) - User: ${userId}, Stamp: ${stampId}`);
-      return await mockAcquireStamp(userId, request);
-    }
-
-    console.log(`[STAMP API] Acquiring stamp - User: ${userId}, Stamp: ${stampId}`);
-    const response = await acquireStamp(userId, request);
-    
-    console.log(`[STAMP API] Successfully acquired stamp ${stampId} for user ${userId}`);
-    return response;
-  } catch (error) {
-    console.error(
-      `[STAMP API] Failed to acquire stamp ${stampId} for user ${userId}:`,
-      error
-    );
-    
-    // エラーの種類を判定
-    if (error instanceof Error) {
-      if (error.message.includes("409")) {
-        throw new StampAlreadyAcquiredError(stampId);
-      }
-      if (error.message.includes("404")) {
-        throw new StampNotFoundError(stampId);
-      }
-      if (error.message.includes("400")) {
-        throw new InvalidRequestError(error.message);
-      }
-    }
-    
-    throw error;
-  }
+  const request: AcquireStampRequest = {
+    stamp_id: stampId,
+  };
+  return await acquireStamp(userId, request);
 }
 
 /**
@@ -181,6 +96,29 @@ export function handleStampApiError(error: unknown): {
   }
 
   if (error instanceof Error) {
+    // HTTPエラーの判定
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes("409") || errorMessage.includes("already")) {
+      return {
+        message: "既に取得済みのスタンプです",
+        details: error.message,
+        type: "already_acquired",
+      };
+    }
+    if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+      return {
+        message: "スタンプが見つかりません",
+        details: error.message,
+        type: "not_found",
+      };
+    }
+    if (errorMessage.includes("400") || errorMessage.includes("invalid")) {
+      return {
+        message: "リクエストが不正です",
+        details: error.message,
+        type: "invalid_request",
+      };
+    }
     return {
       message: "スタンプの取得に失敗しました",
       details: error.message,
@@ -194,6 +132,3 @@ export function handleStampApiError(error: unknown): {
     type: "unknown",
   };
 }
-
-
-

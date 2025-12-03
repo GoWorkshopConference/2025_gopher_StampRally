@@ -25,6 +25,27 @@ func skipIfCI(t *testing.T) {
 	}
 }
 
+// skipIfServerNotAvailable skips the test suite if the backend server is not running.
+// This allows `go test ./...` to pass even when the E2E environment is not up.
+func skipIfServerNotAvailable(t *testing.T) {
+	client := &http.Client{Timeout: 1 * time.Second}
+
+	resp, err := client.Get(baseURL + "/health")
+	if err != nil {
+		t.Skipf("Skipping E2E test because server is not running at %s: %v", baseURL, err)
+		return
+	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			t.Logf("Failed to close healthcheck response body: %v", closeErr)
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Skipf("Skipping E2E test because healthcheck returned non-200 (%d)", resp.StatusCode)
+	}
+}
+
 // Helper functions
 
 func makeRequest(t *testing.T, method, path string, body interface{}) (*http.Response, []byte) {
@@ -71,9 +92,8 @@ type UserDetail struct {
 }
 
 type Stamp struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Image string `json:"image"`
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type UserStamp struct {
@@ -86,6 +106,7 @@ type UserStamp struct {
 
 func TestE2E_UserCRUD(t *testing.T) {
 	skipIfCI(t)
+	skipIfServerNotAvailable(t)
 
 	t.Run("Create User", func(t *testing.T) {
 		reqBody := map[string]string{
@@ -163,11 +184,11 @@ func TestE2E_UserCRUD(t *testing.T) {
 
 func TestE2E_StampCRUD(t *testing.T) {
 	skipIfCI(t)
+	skipIfServerNotAvailable(t)
 
 	t.Run("Create Stamp", func(t *testing.T) {
 		reqBody := map[string]string{
-			"name":  "Gopher Basic",
-			"image": "https://example.com/gopher-basic.png",
+			"name": "Gopher Basic",
 		}
 
 		resp, body := makeRequest(t, http.MethodPost, "/stamps", reqBody)
@@ -178,14 +199,13 @@ func TestE2E_StampCRUD(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotZero(t, stamp.ID)
 		assert.Equal(t, "Gopher Basic", stamp.Name)
-		assert.Equal(t, "https://example.com/gopher-basic.png", stamp.Image)
+		// Image field removed - frontend handles images
 	})
 
 	t.Run("Get Stamp", func(t *testing.T) {
 		// First create a stamp
 		reqBody := map[string]string{
-			"name":  "Get Test Stamp",
-			"image": "https://example.com/test.png",
+			"name": "Get Test Stamp",
 		}
 		resp, body := makeRequest(t, http.MethodPost, "/stamps", reqBody)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -219,8 +239,7 @@ func TestE2E_StampCRUD(t *testing.T) {
 	t.Run("Update Stamp", func(t *testing.T) {
 		// First create a stamp
 		reqBody := map[string]string{
-			"name":  "Original Stamp",
-			"image": "https://example.com/original.png",
+			"name": "Original Stamp",
 		}
 		resp, body := makeRequest(t, http.MethodPost, "/stamps", reqBody)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -231,8 +250,7 @@ func TestE2E_StampCRUD(t *testing.T) {
 
 		// Update the stamp
 		updateBody := map[string]string{
-			"name":  "Updated Stamp",
-			"image": "https://example.com/updated.png",
+			"name": "Updated Stamp",
 		}
 		resp, body = makeRequest(t, http.MethodPut, fmt.Sprintf("/stamps/%d", createdStamp.ID), updateBody)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -241,14 +259,13 @@ func TestE2E_StampCRUD(t *testing.T) {
 		err = json.Unmarshal(body, &updatedStamp)
 		require.NoError(t, err)
 		assert.Equal(t, "Updated Stamp", updatedStamp.Name)
-		assert.Equal(t, "https://example.com/updated.png", updatedStamp.Image)
+		// Image field removed - frontend handles images
 	})
 
 	t.Run("Delete Stamp", func(t *testing.T) {
 		// First create a stamp
 		reqBody := map[string]string{
-			"name":  "Delete Test Stamp",
-			"image": "https://example.com/delete.png",
+			"name": "Delete Test Stamp",
 		}
 		resp, body := makeRequest(t, http.MethodPost, "/stamps", reqBody)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -269,6 +286,7 @@ func TestE2E_StampCRUD(t *testing.T) {
 
 func TestE2E_UserStampAcquisition(t *testing.T) {
 	skipIfCI(t)
+	skipIfServerNotAvailable(t)
 
 	t.Run("Acquire Stamp", func(t *testing.T) {
 		// Create a user
@@ -284,8 +302,7 @@ func TestE2E_UserStampAcquisition(t *testing.T) {
 
 		// Create a stamp
 		stampReq := map[string]string{
-			"name":  "Collectible Stamp",
-			"image": "https://example.com/collectible.png",
+			"name": "Collectible Stamp",
 		}
 		resp, body = makeRequest(t, http.MethodPost, "/stamps", stampReq)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -323,8 +340,7 @@ func TestE2E_UserStampAcquisition(t *testing.T) {
 
 		// Create and acquire a stamp
 		stampReq := map[string]string{
-			"name":  "View Test Stamp",
-			"image": "https://example.com/view-test.png",
+			"name": "View Test Stamp",
 		}
 		resp, body = makeRequest(t, http.MethodPost, "/stamps", stampReq)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -364,10 +380,9 @@ func TestE2E_UserStampAcquisition(t *testing.T) {
 
 		// Create and acquire stamps
 		for i := 1; i <= 3; i++ {
-			stampReq := map[string]string{
-				"name":  fmt.Sprintf("Test Stamp %d", i),
-				"image": fmt.Sprintf("https://example.com/test-%d.png", i),
-			}
+		stampReq := map[string]string{
+			"name": fmt.Sprintf("Test Stamp %d", i),
+		}
 			resp, body = makeRequest(t, http.MethodPost, "/stamps", stampReq)
 			require.Equal(t, http.StatusCreated, resp.StatusCode)
 
@@ -408,8 +423,7 @@ func TestE2E_UserStampAcquisition(t *testing.T) {
 
 		// Create a stamp
 		stampReq := map[string]string{
-			"name":  "Unique Stamp",
-			"image": "https://example.com/unique.png",
+			"name": "Unique Stamp",
 		}
 		resp, body = makeRequest(t, http.MethodPost, "/stamps", stampReq)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)

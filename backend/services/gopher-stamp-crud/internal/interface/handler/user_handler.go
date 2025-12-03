@@ -43,7 +43,13 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userUsecase.Create(c.Request.Context(), request.Name)
+	user, err := h.userUsecase.Create(
+		c.Request.Context(),
+		request.Name,
+		request.TwitterId,
+		request.FavoriteGoFeature,
+		request.Icon,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
@@ -53,8 +59,13 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, openapi.User{
-		Id:   int64(user.ID),
-		Name: user.Name,
+		Id:                int64(user.ID),
+		Name:              user.Name,
+		TwitterId:         user.TwitterID,
+		FavoriteGoFeature: user.FavoriteGoFeature,
+		Icon:              user.Icon,
+		CreatedAt:         &user.CreatedAt,
+		UpdatedAt:         &user.UpdatedAt,
 	})
 }
 
@@ -92,9 +103,14 @@ func (h *UserHandler) GetUser(c *gin.Context, id int64) {
 	}
 
 	c.JSON(http.StatusOK, openapi.UserDetail{
-		Id:             int64(user.ID),
-		Name:           user.Name,
-		AcquiredStamps: &acquiredStamps,
+		Id:                int64(user.ID),
+		Name:              user.Name,
+		TwitterId:         user.TwitterID,
+		FavoriteGoFeature: user.FavoriteGoFeature,
+		Icon:              user.Icon,
+		CreatedAt:         &user.CreatedAt,
+		UpdatedAt:         &user.UpdatedAt,
+		AcquiredStamps:    &acquiredStamps,
 	})
 }
 
@@ -112,8 +128,13 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 	swaggerUsers := make([]openapi.User, len(users))
 	for i, user := range users {
 		swaggerUsers[i] = openapi.User{
-			Id:   int64(user.ID),
-			Name: user.Name,
+			Id:                int64(user.ID),
+			Name:              user.Name,
+			TwitterId:         user.TwitterID,
+			FavoriteGoFeature: user.FavoriteGoFeature,
+			Icon:              user.Icon,
+			CreatedAt:         &user.CreatedAt,
+			UpdatedAt:         &user.UpdatedAt,
 		}
 	}
 
@@ -133,8 +154,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context, id int64) {
 		return
 	}
 
-	// Use name if provided, otherwise fetch existing user and keep name
-	if request.Name == nil {
+	// At least one field must be provided
+	if request.Name == nil && request.TwitterId == nil && request.FavoriteGoFeature == nil && request.Icon == nil {
 		c.JSON(http.StatusBadRequest, openapi.Error{
 			Code:    "INVALID_REQUEST",
 			Message: "At least one field must be provided",
@@ -142,7 +163,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context, id int64) {
 		return
 	}
 
-	user, err := h.userUsecase.Update(c.Request.Context(), uint(id), *request.Name)
+	user, err := h.userUsecase.Update(
+		c.Request.Context(),
+		uint(id),
+		request.Name,
+		request.TwitterId,
+		request.FavoriteGoFeature,
+		request.Icon,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
 			Code:    "INTERNAL_ERROR",
@@ -152,8 +180,13 @@ func (h *UserHandler) UpdateUser(c *gin.Context, id int64) {
 	}
 
 	c.JSON(http.StatusOK, openapi.User{
-		Id:   int64(user.ID),
-		Name: user.Name,
+		Id:                int64(user.ID),
+		Name:              user.Name,
+		TwitterId:         user.TwitterID,
+		FavoriteGoFeature: user.FavoriteGoFeature,
+		Icon:              user.Icon,
+		CreatedAt:         &user.CreatedAt,
+		UpdatedAt:         &user.UpdatedAt,
 	})
 }
 

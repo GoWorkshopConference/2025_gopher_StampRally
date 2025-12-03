@@ -80,20 +80,6 @@ export interface UserUpdateRequest {
   icon?: string;
 }
 
-export interface UserFilterRequest {
-  /**
-   * ページ番号（1から開始）
-   * @minimum 1
-   */
-  page?: number;
-  /**
-   * 1ページあたりの取得件数
-   * @minimum 1
-   * @maximum 100
-   */
-  page_size?: number;
-}
-
 export type UserDetailAllOf = {
   /** 取得済みスタンプの一覧 */
   acquired_stamps?: UserStamp[];
@@ -109,11 +95,6 @@ export interface Stamp {
    * @maxLength 100
    */
   name: string;
-  /**
-   * スタンプ画像URL
-   * @maxLength 500
-   */
-  image: string;
   /** 作成日時 */
   created_at?: string;
   /** 更新日時 */
@@ -126,63 +107,31 @@ export interface StampCreateRequest {
    * @maxLength 100
    */
   name: string;
-  /**
-   * スタンプ画像URL
-   * @maxLength 500
-   */
-  image: string;
 }
 
+/**
+ * スタンプ更新リクエスト。
+ */
 export interface StampUpdateRequest {
   /**
    * スタンプ名
    * @maxLength 100
    */
   name?: string;
-  /**
-   * スタンプ画像URL
-   * @maxLength 500
-   */
-  image?: string;
 }
 
 export interface UserStamp {
   /** ユーザーID */
   user_id: number;
-  /** スタンプIDの配列 */
-  stamp_id: number[];
+  /** スタンプID */
+  stamp_id: number;
+  /** スタンプ取得日時 */
+  acquired_at?: string;
 }
 
 export interface AcquireStampRequest {
   /** 取得するスタンプのID */
   stamp_id: number;
-}
-
-export interface Pagination {
-  /**
-   * 現在のページ番号
-   * @minimum 1
-   */
-  page: number;
-  /**
-   * 1ページあたりの件数
-   * @minimum 1
-   */
-  page_size: number;
-  /**
-   * 総件数
-   * @minimum 0
-   */
-  total_items: number;
-  /**
-   * 総ページ数
-   * @minimum 0
-   */
-  total_pages: number;
-  /** 次のページが存在するか */
-  has_next?: boolean;
-  /** 前のページが存在するか */
-  has_previous?: boolean;
 }
 
 export interface Error {
@@ -193,23 +142,6 @@ export interface Error {
   /** エラー詳細 */
   details?: string;
 }
-
-export interface ErrorResponse {
-  /** エラーメッセージ */
-  error: string;
-}
-
-export type FilterUsersParams = {
-/**
- * 検索キーワード（名前またはTwitterIDで部分一致検索）。空文字または未指定の場合は全件取得。
- */
-query?: string;
-};
-
-export type FilterUsers200 = {
-  users?: User[];
-  pagination?: Pagination;
-};
 
 export type ListStampsParams = {
 /**

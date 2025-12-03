@@ -36,8 +36,6 @@ import type {
 import { customInstance } from '../../mutator';
 
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
 
 
 /**
@@ -46,7 +44,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 export const listStamps = (
     params?: ListStampsParams,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+ signal?: AbortSignal
 ) => {
       
       
@@ -54,7 +52,7 @@ export const listStamps = (
       {url: `/stamps`, method: 'GET',
         params, signal
     },
-      options);
+      );
     }
   
 
@@ -67,16 +65,16 @@ export const getListStampsQueryKey = (params?: ListStampsParams,) => {
     }
 
     
-export const getListStampsQueryOptions = <TData = Awaited<ReturnType<typeof listStamps>>, TError = Error>(params?: ListStampsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStamps>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListStampsQueryOptions = <TData = Awaited<ReturnType<typeof listStamps>>, TError = Error>(params?: ListStampsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStamps>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListStampsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStamps>>> = ({ signal }) => listStamps(params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStamps>>> = ({ signal }) => listStamps(params, signal);
 
       
 
@@ -96,7 +94,7 @@ export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TE
           TError,
           Awaited<ReturnType<typeof listStamps>>
         > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TError = Error>(
@@ -106,11 +104,11 @@ export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TE
           TError,
           Awaited<ReturnType<typeof listStamps>>
         > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TError = Error>(
- params?: ListStampsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStamps>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: ListStampsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStamps>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -118,7 +116,7 @@ export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TE
  */
 
 export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TError = Error>(
- params?: ListStampsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStamps>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: ListStampsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStamps>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -140,7 +138,7 @@ export function useListStamps<TData = Awaited<ReturnType<typeof listStamps>>, TE
  */
 export const createStamp = (
     stampCreateRequest: StampCreateRequest,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+ signal?: AbortSignal
 ) => {
       
       
@@ -149,21 +147,21 @@ export const createStamp = (
       headers: {'Content-Type': 'application/json', },
       data: stampCreateRequest, signal
     },
-      options);
+      );
     }
   
 
 
 export const getCreateStampMutationOptions = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStamp>>, TError,{data: StampCreateRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStamp>>, TError,{data: StampCreateRequest}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createStamp>>, TError,{data: StampCreateRequest}, TContext> => {
 
 const mutationKey = ['createStamp'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -171,7 +169,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createStamp>>, {data: StampCreateRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  createStamp(data,requestOptions)
+          return  createStamp(data,)
         }
 
         
@@ -187,7 +185,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary スタンプ作成
  */
 export const useCreateStamp = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStamp>>, TError,{data: StampCreateRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStamp>>, TError,{data: StampCreateRequest}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createStamp>>,
         TError,
@@ -205,14 +203,14 @@ export const useCreateStamp = <TError = Error,
  */
 export const getStamp = (
     id: number,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+ signal?: AbortSignal
 ) => {
       
       
       return customInstance<Stamp>(
       {url: `/stamps/${id}`, method: 'GET', signal
     },
-      options);
+      );
     }
   
 
@@ -225,16 +223,16 @@ export const getGetStampQueryKey = (id?: number,) => {
     }
 
     
-export const getGetStampQueryOptions = <TData = Awaited<ReturnType<typeof getStamp>>, TError = Error>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStamp>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetStampQueryOptions = <TData = Awaited<ReturnType<typeof getStamp>>, TError = Error>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStamp>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, request: requestOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetStampQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStamp>>> = ({ signal }) => getStamp(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStamp>>> = ({ signal }) => getStamp(id, signal);
 
       
 
@@ -254,7 +252,7 @@ export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError
           TError,
           Awaited<ReturnType<typeof getStamp>>
         > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError = Error>(
@@ -264,11 +262,11 @@ export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError
           TError,
           Awaited<ReturnType<typeof getStamp>>
         > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError = Error>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStamp>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStamp>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -276,7 +274,7 @@ export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError
  */
 
 export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError = Error>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStamp>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStamp>>, TError, TData>>, }
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -299,7 +297,7 @@ export function useGetStamp<TData = Awaited<ReturnType<typeof getStamp>>, TError
 export const updateStamp = (
     id: number,
     stampUpdateRequest: StampUpdateRequest,
- options?: SecondParameter<typeof customInstance>,) => {
+ ) => {
       
       
       return customInstance<Stamp>(
@@ -307,21 +305,21 @@ export const updateStamp = (
       headers: {'Content-Type': 'application/json', },
       data: stampUpdateRequest
     },
-      options);
+      );
     }
   
 
 
 export const getUpdateStampMutationOptions = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStamp>>, TError,{id: number;data: StampUpdateRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStamp>>, TError,{id: number;data: StampUpdateRequest}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof updateStamp>>, TError,{id: number;data: StampUpdateRequest}, TContext> => {
 
 const mutationKey = ['updateStamp'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -329,7 +327,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStamp>>, {id: number;data: StampUpdateRequest}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateStamp(id,data,requestOptions)
+          return  updateStamp(id,data,)
         }
 
         
@@ -345,7 +343,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary スタンプ更新
  */
 export const useUpdateStamp = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStamp>>, TError,{id: number;data: StampUpdateRequest}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStamp>>, TError,{id: number;data: StampUpdateRequest}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateStamp>>,
         TError,
@@ -363,27 +361,27 @@ export const useUpdateStamp = <TError = Error,
  */
 export const deleteStamp = (
     id: number,
- options?: SecondParameter<typeof customInstance>,) => {
+ ) => {
       
       
       return customInstance<void>(
       {url: `/stamps/${id}`, method: 'DELETE'
     },
-      options);
+      );
     }
   
 
 
 export const getDeleteStampMutationOptions = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStamp>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStamp>>, TError,{id: number}, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteStamp>>, TError,{id: number}, TContext> => {
 
 const mutationKey = ['deleteStamp'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+      : {mutation: { mutationKey, }};
 
       
 
@@ -391,7 +389,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteStamp>>, {id: number}> = (props) => {
           const {id} = props ?? {};
 
-          return  deleteStamp(id,requestOptions)
+          return  deleteStamp(id,)
         }
 
         
@@ -407,7 +405,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary スタンプ削除
  */
 export const useDeleteStamp = <TError = Error,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStamp>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteStamp>>, TError,{id: number}, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteStamp>>,
         TError,

@@ -13,32 +13,26 @@ const MOCK_STAMPS: Stamp[] = [
   {
     id: 1,
     name: "Go基礎セッション",
-    image: "https://go.dev/images/gophers/ladder.svg",
   },
   {
     id: 2,
     name: "並行処理マスター",
-    image: "https://go.dev/images/gophers/motorcycle.svg",
   },
   {
     id: 3,
     name: "Webアプリ開発",
-    image: "https://go.dev/images/gophers/biplane.svg",
   },
   {
     id: 4,
     name: "マイクロサービス",
-    image: "https://go.dev/images/gophers/cloud.svg",
   },
   {
     id: 5,
     name: "パフォーマンス最適化",
-    image: "https://go.dev/images/gophers/rocket.svg",
   },
   {
     id: 6,
     name: "プロダクション運用",
-    image: "https://go.dev/images/gophers/pilot-bust.svg",
   },
 ];
 
@@ -97,7 +91,7 @@ export async function mockAcquireStamp(
 
   return {
     user_id: userId,
-    stamp_id: Array.from(userStamps),
+    stamp_id: stampId,
   };
 }
 
@@ -113,10 +107,10 @@ export async function mockListUserStamps(userId: number): Promise<{ stamps: User
   }
 
   return {
-    stamps: [{
+    stamps: Array.from(userStamps).map((stampId) => ({
       user_id: userId,
-      stamp_id: Array.from(userStamps),
-    }],
+      stamp_id: stampId,
+    })),
   };
 }
 
