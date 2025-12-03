@@ -46,13 +46,13 @@ func TestUserStampUseCase_ListUserStamps(t *testing.T) {
 							UserID:     1,
 							StampID:    1,
 							AcquiredAt: now,
-							Stamp:      entity.Stamp{ID: 1, Name: "Stamp 1", Image: "stamp1.png"},
+							Stamp:      entity.Stamp{ID: 1, Name: "Stamp 1"},
 						},
 						{
 							UserID:     1,
 							StampID:    2,
 							AcquiredAt: now,
-							Stamp:      entity.Stamp{ID: 2, Name: "Stamp 2", Image: "stamp2.png"},
+							Stamp:      entity.Stamp{ID: 2, Name: "Stamp 2"},
 						},
 					}, nil)
 			},
@@ -61,13 +61,13 @@ func TestUserStampUseCase_ListUserStamps(t *testing.T) {
 					UserID:     1,
 					StampID:    1,
 					AcquiredAt: now,
-					Stamp:      entity.Stamp{ID: 1, Name: "Stamp 1", Image: "stamp1.png"},
+					Stamp:      entity.Stamp{ID: 1, Name: "Stamp 1"},
 				},
 				{
 					UserID:     1,
 					StampID:    2,
 					AcquiredAt: now,
-					Stamp:      entity.Stamp{ID: 2, Name: "Stamp 2", Image: "stamp2.png"},
+					Stamp:      entity.Stamp{ID: 2, Name: "Stamp 2"},
 				},
 			},
 			wantErr: false,
@@ -175,7 +175,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 				// Stamp exists check
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
 
 				// Not already acquired check
 				mockUserStampRepo.EXPECT().
@@ -198,7 +198,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 							UserID:     1,
 							StampID:    1,
 							AcquiredAt: now,
-							Stamp:      entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"},
+							Stamp:      entity.Stamp{ID: 1, Name: "Test Stamp"},
 						},
 					}, nil)
 			},
@@ -241,7 +241,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(true, nil)
@@ -284,7 +284,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, assert.AnError)
@@ -301,7 +301,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, nil)
@@ -321,7 +321,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, nil)
@@ -344,7 +344,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", Image: "test.png"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, nil)
