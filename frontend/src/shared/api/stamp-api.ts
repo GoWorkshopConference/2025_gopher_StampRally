@@ -1,4 +1,4 @@
-import { listStamps, getStamp } from "./generated/stamps/stamps";
+import { listStamps, getStamp, getStampOTP } from "./generated/stamps/stamps";
 import { acquireStamp } from "./generated/user-stamps/user-stamps";
 import type { AcquireStampRequest, UserStamp, Stamp } from "./generated/api.schemas";
 
@@ -24,12 +24,18 @@ export async function fetchStampDetail(stampId: number): Promise<{ id: number; n
  */
 export async function acquireStampApi(
   userId: number,
-  stampId: number
+  stampId: number,
+  otp: string
 ): Promise<UserStamp> {
   const request: AcquireStampRequest = {
     stamp_id: stampId,
+    otp,
   };
   return await acquireStamp(userId, request);
+}
+
+export async function getStampOtpApi(stampId: number): Promise<{ otp?: string }> {
+  return await getStampOTP(stampId);
 }
 
 /**

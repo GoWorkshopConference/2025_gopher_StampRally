@@ -24,14 +24,14 @@ func initializeStampData(db *gorm.DB) error {
 
 	// Initial stamp master data
 	initialStamps := []entity.Stamp{
-		{Name: "午前ワークショップ"},
-		{Name: "午後ワークショップ"},
-		{Name: "ブースC"},
-		{Name: "ブースB"},
-		{Name: "ブースA || 個人展示"},
-		{Name: "Wall企画1"},
-		{Name: "Wall企画2"},
-		{Name: "Wall企画3"},
+		{Name: "午前ワークショップ", SecretKey: "SECRETKEY01"},
+		{Name: "午後ワークショップ", SecretKey: "SECRETKEY02"},
+		{Name: "ブースC", SecretKey: "SECRETKEY03"},
+		{Name: "ブースB", SecretKey: "SECRETKEY04"},
+		{Name: "ブースA || 個人展示", SecretKey: "SECRETKEY05"},
+		{Name: "Wall企画1", SecretKey: "SECRETKEY06"},
+		{Name: "Wall企画2", SecretKey: "SECRETKEY07"},
+		{Name: "Wall企画3", SecretKey: "SECRETKEY08"},
 	}
 
 	if err := db.Create(&initialStamps).Error; err != nil {

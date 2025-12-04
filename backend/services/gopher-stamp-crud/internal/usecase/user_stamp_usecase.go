@@ -8,11 +8,13 @@ import (
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/repository"
 
 	"gorm.io/gorm"
+
+	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/util"
 )
 
 type UserStampUseCase interface {
 	ListUserStamps(ctx context.Context, userID uint) ([]entity.UserStamp, error)
-	AcquireStamp(ctx context.Context, userID, stampID uint) (*entity.UserStamp, error)
+	AcquireStamp(ctx context.Context, userID, stampID uint, otp string) (*entity.UserStamp, error)
 }
 
 type userStampUseCase struct {
@@ -51,7 +53,7 @@ func (uc *userStampUseCase) ListUserStamps(ctx context.Context, userID uint) ([]
 	return userStamps, nil
 }
 
-func (uc *userStampUseCase) AcquireStamp(ctx context.Context, userID, stampID uint) (*entity.UserStamp, error) {
+func (uc *userStampUseCase) AcquireStamp(ctx context.Context, userID, stampID uint, otp string) (*entity.UserStamp, error) {
 	// Check if user exists
 	_, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {
@@ -62,12 +64,17 @@ func (uc *userStampUseCase) AcquireStamp(ctx context.Context, userID, stampID ui
 	}
 
 	// Check if stamp exists
-	_, err = uc.stampRepo.FindByID(ctx, stampID)
+	stamp, err := uc.stampRepo.FindByID(ctx, stampID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("stamp not found")
 		}
 		return nil, err
+	}
+
+	// Verify OTP
+	if !util.VerifyOTP(stamp.SecretKey, otp) {
+		return nil, errors.New("invalid otp")
 	}
 
 	// Check if already acquired

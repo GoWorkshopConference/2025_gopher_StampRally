@@ -14,6 +14,9 @@ import (
 
 // AcquireStampRequest defines model for AcquireStampRequest.
 type AcquireStampRequest struct {
+	// Otp ワンタイムトークン（4桁の数字）
+	Otp string `json:"otp"`
+
 	// StampId 取得するスタンプのID
 	StampId int64 `json:"stamp_id"`
 }
@@ -32,17 +35,11 @@ type Error struct {
 
 // Stamp defines model for Stamp.
 type Stamp struct {
-	// CreatedAt 作成日時
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-
 	// Id スタンプID
 	Id int64 `json:"id"`
 
 	// Name スタンプ名
 	Name string `json:"name"`
-
-	// UpdatedAt 更新日時
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
 // StampCreateRequest defines model for StampCreateRequest.
@@ -191,6 +188,9 @@ type ServerInterface interface {
 	// スタンプ更新
 	// (PUT /stamps/{id})
 	UpdateStamp(c *gin.Context, id int64)
+	// スタンプのOTPを取得
+	// (GET /stamps/{id}/otp)
+	GetStampOTP(c *gin.Context, id int64)
 	// ユーザー一覧取得
 	// (GET /users)
 	ListUsers(c *gin.Context)
@@ -337,6 +337,30 @@ func (siw *ServerInterfaceWrapper) UpdateStamp(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateStamp(c, id)
+}
+
+// GetStampOTP operation middleware
+func (siw *ServerInterfaceWrapper) GetStampOTP(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetStampOTP(c, id)
 }
 
 // ListUsers operation middleware
@@ -493,6 +517,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/stamps/:id", wrapper.DeleteStamp)
 	router.GET(options.BaseURL+"/stamps/:id", wrapper.GetStamp)
 	router.PUT(options.BaseURL+"/stamps/:id", wrapper.UpdateStamp)
+	router.GET(options.BaseURL+"/stamps/:id/otp", wrapper.GetStampOTP)
 	router.GET(options.BaseURL+"/users", wrapper.ListUsers)
 	router.POST(options.BaseURL+"/users", wrapper.CreateUser)
 	router.GET(options.BaseURL+"/users/:id", wrapper.GetUser)

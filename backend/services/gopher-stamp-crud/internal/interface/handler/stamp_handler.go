@@ -1,13 +1,44 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
 	"net/http"
+	"time"
 
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/usecase"
 	openapi "2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
 
 	"github.com/gin-gonic/gin"
 )
+
+// generateOTP generates a 4-digit OTP based on the secret key and current time (1-minute window)
+func generateOTP(secretKey string, t time.Time) string {
+	// Round down to the nearest minute
+	timestamp := t.Truncate(time.Minute).Unix()
+
+	// Create a buffer for the timestamp
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(timestamp))
+
+	// Combine secret key and timestamp
+	data := append([]byte(secretKey), buf...)
+
+	// Hash the data
+	hash := sha256.Sum256(data)
+
+	// Take the first 4 bytes and convert to a number
+	offset := hash[len(hash)-1] & 0x0f
+	binaryCode := int(hash[offset]&0x7f)<<24 |
+		int(hash[offset+1]&0xff)<<16 |
+		int(hash[offset+2]&0xff)<<8 |
+		int(hash[offset+3]&0xff)
+
+	// Generate 4-digit code
+	otp := binaryCode % 10000
+	return fmt.Sprintf("%04d", otp)
+}
 
 type StampHandler struct {
 	stampUseCase usecase.StampUseCase
@@ -44,10 +75,8 @@ func (h *StampHandler) ListStamps(c *gin.Context, params openapi.ListStampsParam
 	response := make([]openapi.Stamp, len(stamps))
 	for i, stamp := range stamps {
 		response[i] = openapi.Stamp{
-			Id:        int64(stamp.ID),
-			Name:      stamp.Name,
-			CreatedAt: &stamp.CreatedAt,
-			UpdatedAt: &stamp.UpdatedAt,
+			Id:   int64(stamp.ID),
+			Name: stamp.Name,
 		}
 	}
 
@@ -80,10 +109,8 @@ func (h *StampHandler) CreateStamp(c *gin.Context) {
 	}
 
 	response := openapi.Stamp{
-		Id:        int64(stamp.ID),
-		Name:      stamp.Name,
-		CreatedAt: &stamp.CreatedAt,
-		UpdatedAt: &stamp.UpdatedAt,
+		Id:   int64(stamp.ID),
+		Name: stamp.Name,
 	}
 
 	c.JSON(http.StatusCreated, response)
@@ -108,10 +135,8 @@ func (h *StampHandler) GetStamp(c *gin.Context, id int64) {
 	}
 
 	response := openapi.Stamp{
-		Id:        int64(stamp.ID),
-		Name:      stamp.Name,
-		CreatedAt: &stamp.CreatedAt,
-		UpdatedAt: &stamp.UpdatedAt,
+		Id:   int64(stamp.ID),
+		Name: stamp.Name,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -156,10 +181,8 @@ func (h *StampHandler) UpdateStamp(c *gin.Context, id int64) {
 	}
 
 	response := openapi.Stamp{
-		Id:        int64(stamp.ID),
-		Name:      stamp.Name,
-		CreatedAt: &stamp.CreatedAt,
-		UpdatedAt: &stamp.UpdatedAt,
+		Id:   int64(stamp.ID),
+		Name: stamp.Name,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -184,4 +207,30 @@ func (h *StampHandler) DeleteStamp(c *gin.Context, id int64) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// GetStampOTP implements openapi.ServerInterface
+func (h *StampHandler) GetStampOTP(c *gin.Context, id int64) {
+	stamp, err := h.stampUseCase.GetStamp(c.Request.Context(), uint(id))
+	if err != nil {
+		if err.Error() == "stamp not found" {
+			c.JSON(http.StatusNotFound, openapi.Error{
+				Code:    "NOT_FOUND",
+				Message: "Stamp not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, openapi.Error{
+			Code:    "INTERNAL_ERROR",
+			Message: "Failed to fetch stamp",
+		})
+		return
+	}
+
+	// Generate OTP
+	otp := generateOTP(stamp.SecretKey, time.Now())
+
+	c.JSON(http.StatusOK, gin.H{
+		"otp": otp,
+	})
 }

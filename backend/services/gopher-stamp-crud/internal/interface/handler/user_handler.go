@@ -211,6 +211,10 @@ func (h *UserHandler) DeleteStamp(c *gin.Context, id int64) {
 	h.stampHandler.DeleteStamp(c, id)
 }
 
+func (h *UserHandler) GetStampOTP(c *gin.Context, id int64) {
+	h.stampHandler.GetStampOTP(c, id)
+}
+
 // Delegate user stamp methods to UserStampHandler
 func (h *UserHandler) ListUserStamps(c *gin.Context, id int64) {
 	h.userStampHandler.ListUserStamps(c, id)

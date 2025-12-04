@@ -65,7 +65,7 @@ func (h *UserStampHandler) AcquireStamp(c *gin.Context, id int64) {
 		return
 	}
 
-	userStamp, err := h.userStampUseCase.AcquireStamp(c.Request.Context(), uint(id), uint(req.StampId))
+	userStamp, err := h.userStampUseCase.AcquireStamp(c.Request.Context(), uint(id), uint(req.StampId), req.Otp)
 	if err != nil {
 		switch err.Error() {
 		case "user not found", "stamp not found":
@@ -78,6 +78,12 @@ func (h *UserStampHandler) AcquireStamp(c *gin.Context, id int64) {
 			c.JSON(http.StatusConflict, openapi.Error{
 				Code:    "ALREADY_EXISTS",
 				Message: "Stamp already acquired",
+			})
+			return
+		case "invalid otp":
+			c.JSON(http.StatusBadRequest, openapi.Error{
+				Code:    "INVALID_REQUEST",
+				Message: "Invalid OTP",
 			})
 			return
 		default:

@@ -205,8 +205,6 @@ paths:
                     stamps:
                       - id: 1
                         name: "Go基礎セッション"
-                        created_at: "2025-11-18T10:00:00Z"
-                        updated_at: "2025-11-18T10:00:00Z"
                     total: 1
         '500':
           description: サーバーエラー
@@ -272,8 +270,6 @@ paths:
               example:
                 id: 1
                 name: "Go基礎セッション"
-                created_at: "2025-11-18T10:00:00Z"
-                updated_at: "2025-11-18T10:00:00Z"
         '404':
           description: スタンプが見つからない
           content:
@@ -366,6 +362,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  
+  /stamps/{id}/otp:
+    get:
+      tags:
+        - Stamps
+      summary: スタンプのOTPを取得
+      description: 指定されたIDのスタンプの現在のOTPを取得する（管理者用）。
+      operationId: getStampOTP
+      parameters:
+        - name: id
+          in: path
+          description: スタンプID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  otp:
+                    type: string
+                    example: "1234"
+        '404':
+          description: スタンプが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   # User Stamp endpoints (ユーザーがスタンプを取得)
   /users/{id}/stamps:
     get:
@@ -404,7 +434,8 @@ paths:
                   value:
                     stamps:
                       - user_id: 102
-                        stamp_id: [1]
+                        stamp_id: 1
+                        acquired_at: "2023-01-01T00:00:00Z"
         '404':
           description: ユーザーが見つからない
           content:
@@ -447,7 +478,8 @@ paths:
                 $ref: '#/components/schemas/UserStamp'
               example:
                 user_id: 1
-                stamp_id: [1]
+                stamp_id: 1
+                acquired_at: "2023-01-01T00:00:00Z"
         '400':
           description: リクエストが不正
           content:
@@ -594,16 +626,6 @@ components:
           description: スタンプ名
           example: "Gopher基礎"
           maxLength: 100
-        created_at:
-          type: string
-          format: date-time
-          description: 作成日時
-          example: "2023-01-01T00:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          description: 更新日時
-          example: "2023-01-01T00:00:00Z"
 
     StampCreateRequest:
       type: object
@@ -652,12 +674,17 @@ components:
       type: object
       required:
         - stamp_id
+        - otp
       properties:
         stamp_id:
           type: integer
           format: int64
           description: 取得するスタンプのID
           example: 1
+        otp:
+          type: string
+          description: ワンタイムトークン（4桁の数字）
+          example: "1234"
 
     Error:
       type: object

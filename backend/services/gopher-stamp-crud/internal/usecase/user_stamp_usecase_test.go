@@ -7,6 +7,7 @@ import (
 
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/entity"
 	mock "2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/mock_repository"
+	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/util"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -158,6 +159,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 		name    string
 		userID  uint
 		stampID uint
+		otp     string
 		mockFn  func()
 		wantErr bool
 		errMsg  string
@@ -166,6 +168,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "success - acquire new stamp",
 			userID:  1,
 			stampID: 1,
+			otp:     util.GenerateOTP("SECRET", now),
 			mockFn: func() {
 				// User exists check
 				mockUserRepo.EXPECT().
@@ -175,7 +178,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 				// Stamp exists check
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", SecretKey: "SECRET"}, nil)
 
 				// Not already acquired check
 				mockUserStampRepo.EXPECT().
@@ -208,6 +211,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "user not found",
 			userID:  999,
 			stampID: 1,
+			otp:     "0000",
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(999)).
@@ -220,6 +224,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "stamp not found",
 			userID:  1,
 			stampID: 999,
+			otp:     "0000",
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
@@ -235,13 +240,14 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "stamp already acquired (duplicate prevention)",
 			userID:  1,
 			stampID: 1,
+			otp:     util.GenerateOTP("SECRET", now),
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", SecretKey: "SECRET"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(true, nil)
@@ -253,6 +259,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "database error on user check",
 			userID:  1,
 			stampID: 1,
+			otp:     "0000",
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
@@ -264,6 +271,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "database error on stamp check",
 			userID:  1,
 			stampID: 1,
+			otp:     "0000",
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
@@ -278,13 +286,14 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "database error on exists check",
 			userID:  1,
 			stampID: 1,
+			otp:     util.GenerateOTP("SECRET", now),
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", SecretKey: "SECRET"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, assert.AnError)
@@ -295,13 +304,14 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "database error on create",
 			userID:  1,
 			stampID: 1,
+			otp:     util.GenerateOTP("SECRET", now),
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", SecretKey: "SECRET"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, nil)
@@ -315,13 +325,14 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "database error on reload",
 			userID:  1,
 			stampID: 1,
+			otp:     util.GenerateOTP("SECRET", now),
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", SecretKey: "SECRET"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, nil)
@@ -338,13 +349,14 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 			name:    "success - stamp not found in reload (fallback path)",
 			userID:  1,
 			stampID: 1,
+			otp:     util.GenerateOTP("SECRET", now),
 			mockFn: func() {
 				mockUserRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
 					Return(&entity.User{ID: 1, Name: "Test User"}, nil)
 				mockStampRepo.EXPECT().
 					FindByID(gomock.Any(), uint(1)).
-					Return(&entity.Stamp{ID: 1, Name: "Test Stamp"}, nil)
+					Return(&entity.Stamp{ID: 1, Name: "Test Stamp", SecretKey: "SECRET"}, nil)
 				mockUserStampRepo.EXPECT().
 					ExistsByUserIDAndStampID(gomock.Any(), uint(1), uint(1)).
 					Return(false, nil)
@@ -372,7 +384,7 @@ func TestUserStampUseCase_AcquireStamp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn()
-			got, err := usecase.AcquireStamp(context.Background(), tt.userID, tt.stampID)
+			got, err := usecase.AcquireStamp(context.Background(), tt.userID, tt.stampID, tt.otp)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, got)

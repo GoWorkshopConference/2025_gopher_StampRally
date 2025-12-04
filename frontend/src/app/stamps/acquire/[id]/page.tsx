@@ -16,7 +16,7 @@ import { logMockMode } from "@/shared/api/mock-client";
 import type { Stamp } from "@/shared/api/generated/api.schemas";
 import { getStampImagePath } from "@/shared/lib/stamp-image";
 
-type AcquisitionState = "loading" | "acquiring" | "success" | "error" | "already_acquired";
+type AcquisitionState = "loading" | "input_otp" | "acquiring" | "success" | "error" | "already_acquired";
 
 interface ErrorInfo {
   message: string;
@@ -35,6 +35,7 @@ export default function AcquireStampPage() {
 
   const [state, setState] = useState<AcquisitionState>("loading");
   const [stamp, setStamp] = useState<Stamp | null>(null);
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState<ErrorInfo | null>(null);
   const [showAnimation, setShowAnimation] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -438,8 +439,8 @@ export default function AcquireStampPage() {
     hasExecuted.current = true;
     console.log('[ACQUIRE] Starting acquisition process for stamp', stampId);
 
-    // スタンプ取得処理
-    const acquireStampProcess = async () => {
+    // スタンプ詳細取得処理
+    const fetchStampInfo = async () => {
       try {
         setState("loading");
 
@@ -458,40 +459,11 @@ export default function AcquireStampPage() {
           return;
         }
 
-        // 3. スタンプ取得API呼び出し
-        setState("acquiring");
-        console.log('[ACQUIRE] Waiting 500ms for UI...');
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const userIdNum = Number(userId);
-        console.log(`[ACQUIRE] Calling API to acquire stamp ${stampId} for user ${userIdNum} (${userId})`);
-
-        await acquireStampApi(userIdNum, stampId);
-
-        // 4. ローカルストレージに追加
-        console.log('[ACQUIRE] Adding to LocalStorage...');
-        const success = addStamp(stampId);
-        console.log(`[ACQUIRE] LocalStorage update result:`, success);
-
-        if (success) {
-          console.log('[ACQUIRE] Success! Showing animation...');
-          setState("success");
-          setShowAnimation(true);
-        } else {
-          throw new Error("スタンプの保存に失敗しました");
-        }
+        // 3. OTP入力待ちへ遷移
+        setState("input_otp");
       } catch (err) {
         console.error("[ACQUIRE] Error occurred:", err);
-
-        // カスタムエラーハンドリング
-        if (err instanceof StampAlreadyAcquiredError) {
-          console.log('[ACQUIRE] Error: Stamp already acquired');
-          setState("already_acquired");
-          return;
-        }
-
         if (err instanceof StampNotFoundError) {
-          console.log('[ACQUIRE] Error: Stamp not found');
           setError({
             message: "スタンプが見つかりません",
             details: `スタンプID ${stampId} は存在しません`,
@@ -499,10 +471,7 @@ export default function AcquireStampPage() {
           setState("error");
           return;
         }
-
-        // その他のエラー
         const errorInfo = handleStampApiError(err);
-        console.log('[ACQUIRE] Error:', errorInfo);
         setError({
           message: errorInfo.message,
           details: errorInfo.details,
@@ -511,7 +480,7 @@ export default function AcquireStampPage() {
       }
     };
 
-    acquireStampProcess();
+    fetchStampInfo();
 
     // クリーンアップ関数
     return () => {
@@ -519,6 +488,82 @@ export default function AcquireStampPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stampId, isInitializing]); // stampIdとisInitializingを依存配列に含める
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 4) return;
+
+    try {
+      setState("acquiring");
+      
+      // LocalStorageとAtomの両方をチェック (再取得)
+      const storedProfile = typeof window !== 'undefined'
+        ? localStorage.getItem('gopher_stamp_rally_user_profile')
+        : null;
+      
+      let userId: string;
+      if (userProfile?.id) {
+        userId = String(userProfile.id);
+      } else if (storedProfile) {
+        const parsed = JSON.parse(storedProfile);
+        userId = String(parsed.id);
+      } else {
+        throw new Error("User ID not found");
+      }
+
+      const userIdNum = Number(userId);
+      console.log(`[ACQUIRE] Calling API to acquire stamp ${stampId} for user ${userIdNum} with OTP ${otp}`);
+
+      await acquireStampApi(userIdNum, stampId, otp);
+
+      // ローカルストレージに追加
+      console.log('[ACQUIRE] Adding to LocalStorage...');
+      const success = addStamp(stampId);
+      
+      if (success) {
+        console.log('[ACQUIRE] Success! Showing animation...');
+        setState("success");
+        setShowAnimation(true);
+      } else {
+        throw new Error("スタンプの保存に失敗しました");
+      }
+    } catch (err) {
+      console.error("[ACQUIRE] Error occurred:", err);
+      
+      // OTPエラーの場合はinput_otpに戻す
+      if (err instanceof Error && err.message.includes("Invalid OTP")) {
+         setError({
+          message: "認証コードが間違っています",
+          details: "正しいコードを入力してください"
+        });
+        setState("input_otp");
+        return;
+      }
+      
+      // その他のエラーハンドリング
+      if (err instanceof StampAlreadyAcquiredError) {
+        setState("already_acquired");
+        return;
+      }
+
+      const errorInfo = handleStampApiError(err);
+      // Invalid Request (OTP間違いなど) の場合
+      if (errorInfo.type === "invalid_request") {
+         setError({
+          message: "認証コードが間違っています",
+          details: "正しいコードを入力してください"
+        });
+        setState("input_otp");
+        return;
+      }
+
+      setError({
+        message: errorInfo.message,
+        details: errorInfo.details,
+      });
+      setState("error");
+    }
+  };
 
   // 初期化中またはローディング中
   if (isInitializing || state === "loading" || state === "acquiring") {
@@ -541,6 +586,75 @@ export default function AcquireStampPage() {
           <div className="flex items-center justify-center gap-2 text-white/80">
             <Sparkles className="w-5 h-5 animate-pulse" />
             <p>少々お待ちください</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // OTP入力画面
+  if (state === "input_otp" && stamp) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">スタンプ認証</h1>
+            <p className="text-gray-600">ブースに表示されている4桁の数字を入力してください</p>
+          </div>
+
+          <div className="flex justify-center mb-6">
+            <img
+              src={getStampImagePath(stamp.name)}
+              alt={stamp.name}
+              className="w-32 h-32 object-contain rounded-lg"
+              onError={(e) => {
+                e.currentTarget.src = "https://go.dev/images/gophers/ladder.svg";
+              }}
+            />
+          </div>
+          <h2 className="text-xl font-bold text-center text-gray-800 mb-6">{stamp.name}</h2>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center font-medium animate-shake">
+              {error.message}
+            </div>
+          )}
+
+          <form onSubmit={handleOtpSubmit} className="space-y-6">
+            <div className="flex justify-center">
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={otp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '');
+                  setOtp(val);
+                  if (error) setError(null);
+                }}
+                className="w-48 text-center text-4xl font-bold tracking-widest border-b-4 border-blue-500 focus:border-blue-700 outline-none py-2 text-gray-800 placeholder-gray-300"
+                placeholder="0000"
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={otp.length !== 4}
+              className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              スタンプを取得する
+            </button>
+          </form>
+          
+          <div className="mt-4 text-center">
+             <button
+                onClick={() => router.push("/stamps")}
+                className="text-gray-500 text-sm hover:text-gray-700 underline"
+              >
+                キャンセル
+              </button>
           </div>
         </div>
       </div>
