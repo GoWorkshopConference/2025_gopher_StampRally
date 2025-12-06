@@ -1,8 +1,8 @@
 services:
   app:
     build:
-      context: .
-      dockerfile: ./services/gopher-stamp-crud/Dockerfile
+      context: ..
+      dockerfile: ./backend/services/gopher-stamp-crud/Dockerfile
     ports:
       - "8080:8080"
     depends_on:
