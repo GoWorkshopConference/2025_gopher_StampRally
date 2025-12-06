@@ -35,11 +35,10 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
           sh -s -- -b $(go env GOPATH)/bin $GOLANGCI_LINT_VERSION
       - name: Lint ${{ matrix.service }} service
+        working-directory: backend/services/${{ matrix.service }}
         run: |
-          cd backend
-          go work sync || true
+          go mod download
           golangci-lint run \
             --timeout=5m \
-            --config=${LINT_CONFIG_PATH} \
-            --skip-dirs '(?i)internal/swagger|^gen($|/)' \
-            ./services/${{ matrix.service }}/...
+            --config=../../configs/golangci.yml \
+            ./...

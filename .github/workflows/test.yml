@@ -91,10 +91,10 @@ jobs:
           cache: false
 
       - name: Run tests for ${{ matrix.service }}
-        working-directory: backend
+        working-directory: backend/services/${{ matrix.service }}
         run: |
-          # テストを実行
-          go test -v ./services/${{ matrix.service }}/...
+          go mod download
+          go test -v ./...
 
       - name: Cleanup
         if: always()
