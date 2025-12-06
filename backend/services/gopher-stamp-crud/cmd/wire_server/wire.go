@@ -3,6 +3,8 @@
 package wire_server
 
 import (
+	"os"
+
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/repository"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/infrastructure/mysql"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/interface/handler"
@@ -65,7 +67,7 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	// CORS settings: allow frontend origin
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{
-		"http://localhost:3000",
+		"https://2025-gopher-stamp-rally.vercel.app/",
 	}
 	corsConfig.AllowCredentials = true
 	// Allow common methods and headers (Authorization etc.)
@@ -82,6 +84,11 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r.GET("/health", healthHandler)
 	r.HEAD("/health", healthHandler)
 
-	openapi.RegisterHandlers(r, h)
+	// Get baseURL from environment variable, default to empty string if not set
+	baseURL := os.Getenv("BASE_API_URL")
+	options := openapi.GinServerOptions{
+		BaseURL: baseURL,
+	}
+	openapi.RegisterHandlersWithOptions(r, h, options)
 	return r
 }

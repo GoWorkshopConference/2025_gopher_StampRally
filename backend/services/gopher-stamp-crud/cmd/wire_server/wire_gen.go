@@ -69,7 +69,7 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{
-		"http://localhost:3000",
+		"https://2025-gopher-stamp-rally.vercel.app/",
 	}
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
