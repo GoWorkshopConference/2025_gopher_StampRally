@@ -380,9 +380,9 @@ func TestE2E_UserStampAcquisition(t *testing.T) {
 
 		// Create and acquire stamps
 		for i := 1; i <= 3; i++ {
-		stampReq := map[string]string{
-			"name": fmt.Sprintf("Test Stamp %d", i),
-		}
+			stampReq := map[string]string{
+				"name": fmt.Sprintf("Test Stamp %d", i),
+			}
 			resp, body = makeRequest(t, http.MethodPost, "/stamps", stampReq)
 			require.Equal(t, http.StatusCreated, resp.StatusCode)
 
