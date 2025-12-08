@@ -65,18 +65,23 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r := gin.Default()
 
 	// CORS settings: allow frontend origin
-	corsConfig := cors.DefaultConfig()
 	// Get allowed origin from environment variable, default to production frontend URL
 	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
 	if allowedOrigin == "" {
 		allowedOrigin = "https://2025-gopher-stamp-rally.vercel.app"
 	}
-	corsConfig.AllowOrigins = []string{allowedOrigin}
-	corsConfig.AllowCredentials = true
-	// Allow common methods and headers (Authorization etc.)
-	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{allowedOrigin},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60, // 12 hours
+	}
 	r.Use(cors.New(corsConfig))
+
+	// Debug: log CORS configuration (remove in production if needed)
+	gin.SetMode(gin.ReleaseMode) // Set to release mode to reduce logs
 
 	// Health check endpoint (supports both GET and HEAD for Docker healthcheck)
 	healthHandler := func(c *gin.Context) {

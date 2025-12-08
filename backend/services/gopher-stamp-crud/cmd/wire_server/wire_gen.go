@@ -67,18 +67,20 @@ func NewUserStampRepository(db *gorm.DB) repository.UserStampRepository {
 func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r := gin.Default()
 
-	corsConfig := cors.DefaultConfig()
-
 	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
 	if allowedOrigin == "" {
 		allowedOrigin = "https://2025-gopher-stamp-rally.vercel.app"
 	}
-	corsConfig.AllowOrigins = []string{allowedOrigin}
-	corsConfig.AllowCredentials = true
-
-	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{allowedOrigin},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60,
+	}
 	r.Use(cors.New(corsConfig))
+	gin.SetMode(gin.ReleaseMode)
 
 	healthHandler := func(c *gin.Context) {
 		c.JSON(200, gin.H{
