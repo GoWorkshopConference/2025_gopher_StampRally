@@ -68,6 +68,9 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	corsConfig := cors.DefaultConfig()
 	// Get allowed origin from environment variable, default to production frontend URL
 	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	if allowedOrigin == "" {
+		allowedOrigin = "https://2025-gopher-stamp-rally.vercel.app"
+	}
 	corsConfig.AllowOrigins = []string{allowedOrigin}
 	corsConfig.AllowCredentials = true
 	// Allow common methods and headers (Authorization etc.)
