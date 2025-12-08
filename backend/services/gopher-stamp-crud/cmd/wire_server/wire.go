@@ -4,6 +4,7 @@ package wire_server
 
 import (
 	"os"
+	"strings"
 
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/domain/repository"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/infrastructure/mysql"
@@ -67,6 +68,9 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	// CORS settings: allow frontend origin
 	// Get allowed origin from environment variable, default to production frontend URL
 	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	if allowedOrigin == "" {
+		allowedOrigin = "https://2025-gopher-stamp-rally.vercel.app"
+	}
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{allowedOrigin},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
@@ -90,7 +94,12 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r.HEAD("/health", healthHandler)
 
 	// Get baseURL from environment variable, default to empty string if not set
+	// BaseURL should be a path prefix (e.g., "/api"), not a full URL
 	baseURL := os.Getenv("BASE_API_URL")
+	// If BASE_API_URL is a full URL (starts with http:// or https://), ignore it
+	if strings.HasPrefix(baseURL, "http://") || strings.HasPrefix(baseURL, "https://") {
+		baseURL = ""
+	}
 	options := openapi.GinServerOptions{
 		BaseURL: baseURL,
 	}

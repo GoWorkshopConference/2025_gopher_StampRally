@@ -17,6 +17,7 @@ import (
 	"github.com/google/wire"
 	"gorm.io/gorm"
 	"os"
+	"strings"
 )
 
 // Injectors from wire.go:
@@ -68,6 +69,9 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r := gin.Default()
 
 	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	if allowedOrigin == "" {
+		allowedOrigin = "https://2025-gopher-stamp-rally.vercel.app"
+	}
 	corsConfig := cors.Config{
 		AllowOrigins:     []string{allowedOrigin},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
@@ -88,6 +92,10 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r.HEAD("/health", healthHandler)
 
 	baseURL := os.Getenv("BASE_API_URL")
+
+	if strings.HasPrefix(baseURL, "http://") || strings.HasPrefix(baseURL, "https://") {
+		baseURL = ""
+	}
 	options := openapi.GinServerOptions{
 		BaseURL: baseURL,
 	}
