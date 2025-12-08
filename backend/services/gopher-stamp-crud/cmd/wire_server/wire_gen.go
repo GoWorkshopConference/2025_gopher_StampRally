@@ -11,12 +11,12 @@ import (
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/infrastructure/mysql"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/interface/handler"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/usecase"
-	openapi "2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
-
+	"2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"gorm.io/gorm"
+	"os"
 )
 
 // Injectors from wire.go:
@@ -68,10 +68,11 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{
-		"https://2025-gopher-stamp-rally.vercel.app/",
-	}
+
+	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	corsConfig.AllowOrigins = []string{allowedOrigin}
 	corsConfig.AllowCredentials = true
+
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
 	r.Use(cors.New(corsConfig))
@@ -83,6 +84,11 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	}
 	r.GET("/health", healthHandler)
 	r.HEAD("/health", healthHandler)
-	openapi.RegisterHandlers(r, h)
+
+	baseURL := os.Getenv("BASE_API_URL")
+	options := openapi.GinServerOptions{
+		BaseURL: baseURL,
+	}
+	openapi.RegisterHandlersWithOptions(r, h, options)
 	return r
 }
