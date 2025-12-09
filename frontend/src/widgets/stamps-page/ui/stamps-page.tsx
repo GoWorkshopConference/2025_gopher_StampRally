@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Progress } from "@/shared/ui/progress";
@@ -36,10 +37,24 @@ export function StampsPage() {
 
   return (
     <>
-      <AppHeader title="Gophers Stamp Rally" icon={<img src="/gwc-title.png" alt="Gophers Stamp Rally" className="w-6 h-6 object-contain" />} badge={`${collectedCount} / ${totalCount}`}>
+      <AppHeader
+        title="Gophers Stamp Rally"
+        icon={<img src="/gwc-title.png" alt="Gophers Stamp Rally" className="w-6 h-6 object-contain" />}
+        badge={`${collectedCount} / ${totalCount}`}
+        action={
+          <Link
+            href="https://gwc.gocon.jp/2025/timetable/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/25"
+          >
+            タイムテーブル
+          </Link>
+        }
+      >
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>進捗状況</span>
+            <span className="font-semibold">{collectedCount} / {totalCount}</span>
             <span>{Math.round(progressPercentage)}%</span>
           </div>
           <Progress value={progressPercentage} className="h-3 bg-white/20" />
