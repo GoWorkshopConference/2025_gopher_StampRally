@@ -37,7 +37,7 @@ export function LoadingSpinner({
 
       {/* Loading text with fade animation */}
       <div className="mt-10 space-y-3">
-        <p className="text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-200 animate-pulse">
+        <p className="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 animate-pulse">
           {message}
         </p>
         {/* Animated dots with staggered animation */}
