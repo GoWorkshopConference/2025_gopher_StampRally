@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { ParticipantsList } from "@/widgets/participants-list/ui/participants-list";
 import { ParticipantDetail } from "@/widgets/participant-detail/ui/participant-detail";
@@ -13,7 +14,20 @@ export function ParticipantsPage() {
   if (isLoading) {
     return (
       <>
-        <AppHeader title="参加者一覧" icon={<Users className="w-6 h-6" />} />
+        <AppHeader
+          title="参加者一覧"
+          icon={<Users className="w-6 h-6" />}
+          action={
+            <Link
+              href="https://gwc.gocon.jp/2025/timetable/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/25"
+            >
+              タイムテーブル
+            </Link>
+          }
+        />
         <LoadingSpinner />
       </>
     );
@@ -21,7 +35,20 @@ export function ParticipantsPage() {
 
   return (
     <>
-      <AppHeader title="参加者一覧" icon={<Users className="w-6 h-6" />} />
+      <AppHeader
+        title="参加者一覧"
+        icon={<Users className="w-6 h-6" />}
+        action={
+          <Link
+            href="https://gwc.gocon.jp/2025/timetable/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/25"
+          >
+            タイムテーブル
+          </Link>
+        }
+      />
       <div className="max-w-md mx-auto p-4">
         <ParticipantsList participants={participants} onParticipantClick={handleParticipantClick} />
       </div>
