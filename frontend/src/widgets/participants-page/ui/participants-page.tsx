@@ -46,7 +46,7 @@ export function ParticipantsPage() {
             rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/25"
           >
-            タイムテーブル
+            <Clock className="h-5 w-5" />
           </Link>
         }
       />
