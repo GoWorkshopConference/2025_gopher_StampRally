@@ -20,17 +20,26 @@ interface StampDetailDialogProps {
 }
 
 function getStampDescription(stampName: string): string | null {
-  switch (stampName) {
+  // スタンプ名の前後の空白を除去して比較
+  const trimmedName = stampName.trim();
+
+  switch (trimmedName) {
     case "午前ワークショップ":
-      return "10:30 ~ 12:30のKIITOホールで行われるカークショップに参加しよう！";
+      return "10:30 ~ 12:30のKIITOホールで行われるワークショップに参加しよう！";
     case "午後ワークショップ":
       return "15:45 ~ 17:45のKIITOホールで行われるワークショップに参加しよう！";
-    case "ブースA || 個人展示":
+    case "シャッフルランチ":
       return "ギャラリーAのブースAで12:30 - 14:00に開かれるシャッフルランチに参加しよう！";
-    case "ブースB":
+    case "ジェスチャーゲーム":
       return "ギャラリーAのブースCで開かれるジェスチャーゲームに参加しよう！";
-    case "ブースC":
+    case "Go製のゲーム展示":
       return "ギャラリーAのブースBで10:30 - 14:00 & 15:30 - 17:45に開かれるGo製のゲーム展示・ゲーム作りブースに参加しよう！";
+    case "Gopher Wall1":
+      return "ギャラリーAにあるGopher Wall1「Goの開発スタイル」にPost Itを貼ろう！";
+    case "Gopher Wall2":
+      return "ギャラリーAにあるGopher Wall2「Goのリリースごとでの思い出」にPost Itを貼ろう！";
+    case "Gopher Wall3":
+      return "ギャラリーAにあるGopher Wall3「Go のここが好き！」にPost Itを貼ろう！";
     default:
       return null;
   }

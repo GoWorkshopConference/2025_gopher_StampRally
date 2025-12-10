@@ -9,13 +9,13 @@ export function getStampImagePath(stampName: string): string {
   const nameMap: Record<string, string> = {
     '午前ワークショップ': '/gwc-am-workshop.png',
     '午後ワークショップ': '/gwc-pm-workshop.png',
-    'ブースA || 個人展示': '/gwc-a-individual.png',
+    'シャッフルランチ': '/gwc-a-individual.png',
     'ブースA': '/gwc-a-individual.png',
-    'ブースB': '/gwc-ebitengine.png',
-    'ブースC': '/gwc-c-game.png',
-    'Wall企画1': '/gwc-a-wall.png',
-    'Wall企画2': '/gwc-b-wall.png',
-    'Wall企画3': '/gwc-c-wall.png',
+    'ジェスチャーゲーム': '/gwc-ebitengine.png',
+    'Go製のゲーム展示': '/gwc-c-game.png',
+    'Gopher Wall1 ': '/gwc-a-wall.png',
+    'Gopher Wall2': '/gwc-b-wall.png',
+    'Gopher Wall3': '/gwc-c-wall.png',
   };
 
   return nameMap[stampName] || '/gwc-a-wall.png'; // デフォルト画像

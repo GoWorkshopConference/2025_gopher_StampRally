@@ -26,12 +26,12 @@ func initializeStampData(db *gorm.DB) error {
 	initialStamps := []entity.Stamp{
 		{Name: "午前ワークショップ"},
 		{Name: "午後ワークショップ"},
-		{Name: "ブースC"},
-		{Name: "ブースB"},
-		{Name: "ブースA || 個人展示"},
-		{Name: "Wall企画1"},
-		{Name: "Wall企画2"},
-		{Name: "Wall企画3"},
+		{Name: "Go製のゲーム展示"},
+		{Name: "ジェスチャーゲーム"},
+		{Name: "シャッフルランチ"},
+		{Name: "Gopher Wall1 "},
+		{Name: "Gopher Wall2"},
+		{Name: "Gopher Wall3"},
 	}
 
 	if err := db.Create(&initialStamps).Error; err != nil {
