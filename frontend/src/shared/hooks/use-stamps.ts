@@ -74,13 +74,3 @@ export function useStamps() {
     acquiredStampIds,
   };
 }
-
-
-
-
-
-
-
-
-
-

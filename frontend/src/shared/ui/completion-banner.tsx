@@ -14,12 +14,3 @@ export function CompletionBanner({ className = "" }: CompletionBannerProps) {
   );
 }
 
-
-
-
-
-
-
-
-
-
