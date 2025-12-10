@@ -1,35 +1,20 @@
  "use client";
 
- import { useEffect, useState } from "react";
  import { X } from "lucide-react";
 
- const STORAGE_KEY = "kiito-first-visit-popup-seen";
+ interface FirstVisitPopupProps {
+   onClose?: () => void;
+ }
 
- export function FirstVisitPopup() {
-   const [open, setOpen] = useState(false);
-
-   useEffect(() => {
-     try {
-       const seen = localStorage.getItem(STORAGE_KEY);
-       if (!seen) {
-         setOpen(true);
-       }
-     } catch {
-       // 無視（プライベートモード等）
-       setOpen(true);
-     }
-   }, []);
-
+ export function FirstVisitPopup({ onClose }: FirstVisitPopupProps) {
    const handleClose = () => {
-     setOpen(false);
      try {
-       localStorage.setItem(STORAGE_KEY, "true");
+       localStorage.setItem("kiito-first-visit-popup-seen", "true");
      } catch {
        // 無視
      }
+     onClose?.();
    };
-
-   if (!open) return null;
 
    return (
      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
