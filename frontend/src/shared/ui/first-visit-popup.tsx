@@ -35,7 +35,7 @@
              <div className="space-y-2">
                <h2 className="text-lg font-semibold text-slate-900">初めての方へ</h2>
                <p className="text-sm text-slate-700 leading-relaxed">
-                 オープニングやサークショップ参加者の方は
+                 オープニングやワークショップ参加者の方は
                  <strong className="mx-1 text-slate-900">KIITOホール</strong>
                  へお越しください。会場フロアは下のマップを参考にどうぞ。
                </p>
