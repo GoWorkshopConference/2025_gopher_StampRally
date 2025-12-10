@@ -43,7 +43,6 @@ export function StampsPage() {
       <AppHeader
         title="Gophers Stamp Rally"
         icon={<img src="/gwc-title.png" alt="Gophers Stamp Rally" className="w-6 h-6 object-contain" />}
-        badge={`${collectedCount} / ${totalCount}`}
         action={
           <div className="flex items-center gap-2">
             <button

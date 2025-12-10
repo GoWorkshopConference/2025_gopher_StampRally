@@ -9,7 +9,7 @@ interface AppHeaderProps {
   children?: ReactNode;
 }
 
-export function AppHeader({ title, icon, badge, action, children }: AppHeaderProps) {
+export function AppHeader({ title, icon, action, children }: AppHeaderProps) {
   return (
     <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white p-6 shadow-lg">
       <div className="max-w-md mx-auto">
@@ -19,11 +19,6 @@ export function AppHeader({ title, icon, badge, action, children }: AppHeaderPro
             {title}
           </h1>
           <div className="flex items-center gap-3">
-            {badge && (
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                {badge}
-              </Badge>
-            )}
             {action}
           </div>
         </div>
