@@ -39,14 +39,6 @@
                  <strong className="mx-1 text-slate-900">KIITOホール</strong>
                  へお越しください。会場フロアは下のマップを参考にどうぞ。
                </p>
-               <a
-                 href="https://gwc.gocon.jp/2025/timetable/"
-                 target="_blank"
-                 rel="noreferrer"
-                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:brightness-110"
-               >
-                 タイムテーブルを見る
-               </a>
              </div>
            </div>
 
