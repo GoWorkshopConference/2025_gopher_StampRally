@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Clock, X } from "lucide-react";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Progress } from "@/shared/ui/progress";
 import { CompletionBanner } from "@/shared/ui/completion-banner";
@@ -10,7 +10,6 @@ import { StampGrid } from "@/widgets/stamp-grid/ui/stamp-grid";
 import { StampDetailDialog } from "@/widgets/stamp-detail-dialog/ui/stamp-detail-dialog";
 import { LoadingSpinner } from "@/shared/ui/loading-spinner";
 import { useStamps } from "@/shared/hooks/use-stamps";
-import { X } from "lucide-react";
 
 export function StampsPage() {
   const { stamps, isLoading, selectedStamp, setSelectedStamp, handleStampClick, acquiredStampIds } = useStamps();
@@ -56,9 +55,10 @@ export function StampsPage() {
               href="https://gwc.gocon.jp/2025/timetable/"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/15 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/25"
+              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/15 p-1.5 text-white shadow-sm transition hover:bg-white/25"
+              aria-label="タイムテーブルを表示"
             >
-              タイムテーブル
+              <Clock className="h-5 w-5" />
             </Link>
           </div>
         }
