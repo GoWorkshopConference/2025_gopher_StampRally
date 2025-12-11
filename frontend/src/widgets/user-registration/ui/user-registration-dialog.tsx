@@ -51,8 +51,8 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
     };
 
     const handleSubmit = async () => {
-        if (!nickname.trim() || !twitterId.trim()) {
-            alert("ニックネームとTwitterIDは必須です");
+        if (!nickname.trim()) {
+            alert("ニックネームは必須です");
             return;
         }
 
@@ -89,7 +89,7 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
             const apiUser = await createUser(
                 {
                     name: nickname.trim(),
-                    twitter_id: twitterId.trim(),
+                    twitter_id: twitterId.trim() || undefined,
                     favorite_go_feature: favoriteGoFeature,
                     icon: iconValue || undefined,
                 },
@@ -146,7 +146,7 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="twitterId" className="text-gray-900">TwitterID *</Label>
+                        <Label htmlFor="twitterId" className="text-gray-900">TwitterID（任意・公開されます）</Label>
                         <Input
                             id="twitterId"
                             placeholder="例: @gopher_taro"
@@ -154,6 +154,9 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
                             onChange={(e) => setTwitterId(e.target.value)}
                             className="bg-white text-gray-900 border-gray-300"
                         />
+                        <p className="text-xs text-gray-500">
+                            入力したTwitterIDは参加者一覧などで公開されます。未入力でも参加できます。
+                        </p>
                     </div>
 
                     <div className="space-y-2">

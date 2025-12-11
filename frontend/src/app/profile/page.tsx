@@ -79,14 +79,14 @@ export default function ProfilePage() {
     }, []);
 
     const isValid = useMemo(() => {
-        return nickname.trim().length > 0 && twitterId.trim().length > 0 && selectedPoints.length > 0;
-    }, [nickname, twitterId, selectedPoints]);
+        return nickname.trim().length > 0 && selectedPoints.length > 0;
+    }, [nickname, selectedPoints]);
 
     const handleSave = useCallback(async () => {
         if (!isValid) {
             // バリデーションエラーメッセージを表示（将来的にトースト通知に置き換え可能）
-            if (!nickname.trim() || !twitterId.trim()) {
-                alert("ニックネームとTwitterIDは必須です");
+            if (!nickname.trim()) {
+                alert("ニックネームは必須です");
                 return;
             }
             if (selectedPoints.length === 0) {
@@ -142,7 +142,7 @@ export default function ProfilePage() {
             if (!Number.isNaN(numericId)) {
                 await updateUser(numericId, {
                     name: nickname.trim(),
-                    twitter_id: twitterId.trim(),
+                    twitter_id: twitterId.trim() || undefined,
                     favorite_go_feature: favoriteGoFeature,
                     icon: iconValue || undefined,
                 });
@@ -204,13 +204,16 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="twitterId">TwitterID *</Label>
+                            <Label htmlFor="twitterId">TwitterID（任意・公開されます）</Label>
                             <Input
                                 id="twitterId"
                                 placeholder="例: @gopher_taro"
                                 value={twitterId}
                                 onChange={(e) => setTwitterId(e.target.value)}
                             />
+                            <p className="text-xs text-gray-500">
+                                入力したTwitterIDは参加者一覧などで公開されます。未入力でも参加できます。
+                            </p>
                         </div>
 
                         <div className="space-y-2">

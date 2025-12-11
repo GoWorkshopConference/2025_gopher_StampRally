@@ -13,7 +13,7 @@ export function AppHeader({ title, icon, action, children }: AppHeaderProps) {
   return (
     <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white p-6 shadow-lg">
       <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-4 gap-3">
+        <div className="flex items-center justify-between gap-3">
           <h1 className="flex items-center gap-2">
             {icon}
             {title}
@@ -22,6 +22,9 @@ export function AppHeader({ title, icon, action, children }: AppHeaderProps) {
             {action}
           </div>
         </div>
+        <p className="mt-1 text-xs text-white/90">
+          GoのマスコットのGopherの原作者はRenée Frenchさんです
+        </p>
         {children}
       </div>
     </div>

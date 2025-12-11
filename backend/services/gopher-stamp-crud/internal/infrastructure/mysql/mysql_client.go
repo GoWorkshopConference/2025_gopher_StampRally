@@ -28,7 +28,7 @@ func initializeStampData(db *gorm.DB) error {
 		{Name: "午後ワークショップ"},
 		{Name: "Go製のゲーム展示"},
 		{Name: "ジェスチャーゲーム"},
-		{Name: "シャッフルランチ"},
+		{Name: "シャッフルランチ || 個人展示"},
 		{Name: "Gopher Wall1 "},
 		{Name: "Gopher Wall2"},
 		{Name: "Gopher Wall3"},
