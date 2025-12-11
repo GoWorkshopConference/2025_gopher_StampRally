@@ -18,23 +18,20 @@ export function StampCard({id, name, isCollected, onCollect}: StampCardProps) {
             }`}
             onClick={() => onCollect(id)}
         >
-            <div className="px-4 py-4">
-                <div
-                    className="bg-white rounded-lg border border-cyan-200 px-5 py-6 text-center flex flex-col items-center gap-4">
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="relative w-24 h-24">
-                            <StampImage
-                                stampName={name}
-                                isAcquired={isCollected}
-                                size="medium"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <h3 className="text-base font-semibold text-gray-800 leading-tight">{name}</h3>
-                        </div>
+            <div className="px-5 py-6 text-center flex flex-col items-center gap-4">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="relative w-24 h-24">
+                        <StampImage
+                            stampName={name}
+                            isAcquired={isCollected}
+                            size="medium"
+                        />
                     </div>
-                    <p className="text-xs font-medium text-cyan-600">タップで詳細表示</p>
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-base font-semibold text-gray-800 leading-tight">{name}</h3>
+                    </div>
                 </div>
+                <p className="text-xs font-medium text-cyan-600">タップで詳細表示</p>
             </div>
         </Card>
     );
