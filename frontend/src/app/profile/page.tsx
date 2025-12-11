@@ -15,6 +15,7 @@ import {AppLayout} from "@/widgets/app-layout/ui/app-layout";
 import {AppHeader} from "@/widgets/app-header/ui/app-header";
 import {ArrowLeft, Save} from "lucide-react";
 import {updateUser} from "@/shared/api/generated/users/users";
+import {LoadingSpinner} from "@/shared/ui/loading-spinner";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -25,6 +26,7 @@ export default function ProfilePage() {
     const [selectedPoints, setSelectedPoints] = useState<string[]>([]);
     const [imagePreview, setImagePreview] = useState<string>("");
     const [isFileUploaded, setIsFileUploaded] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -96,6 +98,12 @@ export default function ProfilePage() {
 
         if (!userProfile) return;
 
+        if (isSubmitting) {
+            return; // 既に送信中の場合は何もしない
+        }
+
+        setIsSubmitting(true);
+
         try {
             // 画像の処理: URLの場合はそのまま保存、base64（ファイルアップロード）の場合はそのまま保存
             let iconValue = "";
@@ -140,13 +148,15 @@ export default function ProfilePage() {
                 });
             }
 
+            setIsSubmitting(false);
             alert("プロフィールを更新しました");
             router.push("/stamps");
         } catch (error) {
             console.error("Failed to update profile on backend:", error);
+            setIsSubmitting(false);
             alert("バックエンドへのプロフィール更新に失敗しました。時間をおいて再度お試しください。");
         }
-    }, [isValid, nickname, twitterId, selectedPoints, profileImageUrl, userProfile, setUserProfile, router]);
+    }, [isValid, nickname, twitterId, selectedPoints, profileImageUrl, userProfile, setUserProfile, router, isSubmitting]);
 
     const progressPercentage = useMemo(() => {
         if (!userProfile || userProfile.totalCount === 0) return 0;
@@ -275,7 +285,7 @@ export default function ProfilePage() {
 
                         <Button
                             onClick={handleSave}
-                            disabled={!isValid}
+                            disabled={!isValid || isSubmitting}
                             className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4 mr-2"/>
@@ -306,6 +316,14 @@ export default function ProfilePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {isSubmitting && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-2xl p-8 shadow-2xl">
+                        <LoadingSpinner message="更新中..." />
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

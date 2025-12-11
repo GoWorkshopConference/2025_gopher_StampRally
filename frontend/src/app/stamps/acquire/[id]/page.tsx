@@ -438,6 +438,26 @@ export default function AcquireStampPage() {
     hasExecuted.current = true;
     console.log('[ACQUIRE] Starting acquisition process for stamp', stampId);
 
+    // リダイレクト元の確認（SessionStorage）
+    if (typeof window !== 'undefined') {
+      const accessKey = `stamp_access_${stampId}`;
+      const hasAccess = sessionStorage.getItem(accessKey);
+      
+      if (!hasAccess) {
+        console.log('[ACQUIRE] Invalid access: No session token found');
+        setError({
+          message: "不正なアクセスです",
+          details: "URLを正しく読み取ってアクセスしてください"
+        });
+        setState("error");
+        return;
+      }
+
+      // オプション: 一度使用したら無効化する場合（リロード対策など）
+      // sessionStorage.removeItem(accessKey); 
+      // ※ リロードでエラーになると不便な場合は削除しない
+    }
+
     // スタンプ取得処理
     const acquireStampProcess = async () => {
       try {

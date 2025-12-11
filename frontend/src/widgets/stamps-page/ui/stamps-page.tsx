@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { MapPin, Clock, X } from "lucide-react";
 import { AppHeader } from "@/widgets/app-header/ui/app-header";
 import { Progress } from "@/shared/ui/progress";
 import { CompletionBanner } from "@/shared/ui/completion-banner";
@@ -11,6 +13,7 @@ import { useStamps } from "@/shared/hooks/use-stamps";
 
 export function StampsPage() {
   const { stamps, isLoading, selectedStamp, setSelectedStamp, handleStampClick, acquiredStampIds } = useStamps();
+  const [showMapModal, setShowMapModal] = useState(false);
 
   const { collectedCount, totalCount, progressPercentage, isComplete } = useMemo(() => {
     const collected = stamps.filter((s) => s.isCollected).length;
@@ -36,10 +39,33 @@ export function StampsPage() {
 
   return (
     <>
-      <AppHeader title="Gophers Stamp Rally" icon={<img src="/gwc-title.png" alt="Gophers Stamp Rally" className="w-6 h-6 object-contain" />} badge={`${collectedCount} / ${totalCount}`}>
+      <AppHeader
+        title="Gophers Stamp Rally"
+        icon={<img src="/gwc-title.png" alt="Gophers Stamp Rally" className="w-6 h-6 object-contain" />}
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowMapModal(true)}
+              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/15 p-1.5 text-white shadow-sm transition hover:bg-white/25"
+              aria-label="会場マップを表示"
+            >
+              <MapPin className="h-5 w-5" />
+            </button>
+            <Link
+              href="https://gwc.gocon.jp/2025/timetable/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/15 p-1.5 text-white shadow-sm transition hover:bg-white/25"
+              aria-label="タイムテーブルを表示"
+            >
+              <Clock className="h-5 w-5" />
+            </Link>
+          </div>
+        }
+      >
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>進捗状況</span>
+            <span className="font-semibold">{collectedCount} / {totalCount}</span>
             <span>{Math.round(progressPercentage)}%</span>
           </div>
           <Progress value={progressPercentage} className="h-3 bg-white/20" />
@@ -60,6 +86,33 @@ export function StampsPage() {
         open={selectedStamp !== null}
         onClose={() => setSelectedStamp(null)}
       />
+
+      {showMapModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setShowMapModal(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              aria-label="閉じる"
+              onClick={() => setShowMapModal(false)}
+              className="absolute right-3 top-3 z-10 rounded-full p-2 bg-white/90 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 shadow-md"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="p-4">
+              <img
+                src="https://kiito.jp/wordpress/wp-content/uploads/2017/08/floor_1f-202204.svg"
+                alt="KIITOホール フロアマップ"
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

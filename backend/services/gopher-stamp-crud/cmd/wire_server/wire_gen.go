@@ -11,12 +11,13 @@ import (
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/infrastructure/mysql"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/interface/handler"
 	"2025_gopher_StampRally/services/gopher-stamp-crud/internal/usecase"
-	openapi "2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
-
+	"2025_gopher_StampRally/services/gopher-stamp-crud/swagger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"gorm.io/gorm"
+	"os"
+	"strings"
 )
 
 // Injectors from wire.go:
@@ -67,14 +68,20 @@ func NewUserStampRepository(db *gorm.DB) repository.UserStampRepository {
 func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	r := gin.Default()
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{
-		"http://localhost:3000",
+	allowedOrigin := os.Getenv("CORS_ALLOWED_ORIGIN")
+	if allowedOrigin == "" {
+		allowedOrigin = "https://2025-gopher-stamp-rally.vercel.app"
 	}
-	corsConfig.AllowCredentials = true
-	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{allowedOrigin},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60,
+	}
 	r.Use(cors.New(corsConfig))
+	gin.SetMode(gin.ReleaseMode)
 
 	healthHandler := func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -83,6 +90,15 @@ func NewGinEngine(h openapi.ServerInterface) *gin.Engine {
 	}
 	r.GET("/health", healthHandler)
 	r.HEAD("/health", healthHandler)
-	openapi.RegisterHandlers(r, h)
+
+	baseURL := os.Getenv("BASE_API_URL")
+
+	if strings.HasPrefix(baseURL, "http://") || strings.HasPrefix(baseURL, "https://") {
+		baseURL = ""
+	}
+	options := openapi.GinServerOptions{
+		BaseURL: baseURL,
+	}
+	openapi.RegisterHandlersWithOptions(r, h, options)
 	return r
 }

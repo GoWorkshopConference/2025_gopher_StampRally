@@ -90,7 +90,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Build ${{ matrix.service }}
-        working-directory: backend
+        working-directory: backend/services/${{ matrix.service }}
         run: |
-          go work sync || true
-          go build ./services/${{ matrix.service }}/...
+          go mod download
+          go build ./cmd/server

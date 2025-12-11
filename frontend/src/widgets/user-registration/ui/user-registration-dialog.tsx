@@ -12,6 +12,7 @@ import {generateUserId} from "@/shared/lib/storage";
 import {userProfileAtom} from "@/shared/store/atoms";
 import {ImageWithFallback} from "@/shared/lib/ImageWithFallback";
 import {createUser} from "@/shared/api/generated/users/users";
+import {LoadingSpinner} from "@/shared/ui/loading-spinner";
 
 interface UserRegistrationDialogProps {
     open: boolean;
@@ -26,6 +27,7 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
     const [selectedPoints, setSelectedPoints] = useState<string[]>([]);
     const [imagePreview, setImagePreview] = useState<string>("");
     const [isFileUploaded, setIsFileUploaded] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +60,12 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
             alert("好きなGolangポイントを少なくとも1つ選択してください");
             return;
         }
+
+        if (isSubmitting) {
+            return; // 既に送信中の場合は何もしない
+        }
+
+        setIsSubmitting(true);
 
         try {
             // 画像の処理: URLの場合はそのまま保存、base64（ファイルアップロード）の場合はそのまま保存
@@ -100,9 +108,11 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
             };
 
             setUserProfile(profile);
+            setIsSubmitting(false);
             onComplete(profile);
         } catch (error) {
             console.error("Failed to register user:", error);
+            setIsSubmitting(false);
             alert("ユーザー登録に失敗しました。時間をおいて再度お試しください。");
         }
     };
@@ -232,12 +242,21 @@ export function UserRegistrationDialog({open, onComplete}: UserRegistrationDialo
                 <DialogFooter>
                     <Button
                         onClick={handleSubmit}
-                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                        disabled={isSubmitting}
+                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         登録する
                     </Button>
                 </DialogFooter>
             </DialogContent>
+
+            {isSubmitting && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-2xl p-8 shadow-2xl">
+                        <LoadingSpinner message="登録中..." />
+                    </div>
+                </div>
+            )}
         </Dialog>
     );
 }
