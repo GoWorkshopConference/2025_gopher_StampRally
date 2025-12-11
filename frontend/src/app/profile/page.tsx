@@ -120,12 +120,16 @@ export default function ProfilePage() {
                 }
             }
 
+            // TwitterID が空の場合は既存の値を維持（空文字で上書きしない）
+            const sanitizedTwitter = twitterId.trim();
+            const twitterToKeep = sanitizedTwitter === "" ? userProfile.twitterId : sanitizedTwitter;
+
             // LocalStorage用に保持している日本語ラベルはそのまま使い続ける
             // LocalStorageにはURLまたはbase64画像を保存
             const updated = {
                 ...userProfile,
                 nickname: nickname.trim(),
-                twitterId: twitterId.trim(),
+                twitterId: twitterToKeep ?? "",
                 profileImageUrl: iconValue,
                 favoriteGolangPoints: selectedPoints,
             };
@@ -142,7 +146,8 @@ export default function ProfilePage() {
             if (!Number.isNaN(numericId)) {
                 await updateUser(numericId, {
                     name: nickname.trim(),
-                    twitter_id: twitterId.trim() || undefined,
+                    // 空文字の場合は送信せず、既存の値を保持
+                    twitter_id: sanitizedTwitter === "" ? undefined : sanitizedTwitter,
                     favorite_go_feature: favoriteGoFeature,
                     icon: iconValue || undefined,
                 });

@@ -34,7 +34,9 @@ export function StampImage({
     <img
       src={imagePath}
       alt={stampName}
-      className={`${sizeClass} ${shapeClass} object-cover transition-all duration-300 ${blurClass} ${className}`}
+      className={`${sizeClass} ${shapeClass} object-cover transition-all duration-300 select-none ${blurClass} ${className}`}
+      draggable={false}
+      onContextMenu={(e) => e.preventDefault()}
       onError={(e) => {
         const size = sizeClass.includes("12") ? 48 : sizeClass.includes("24") ? 96 : 400;
         e.currentTarget.src = `https://via.placeholder.com/${size}?text=Stamp`;
@@ -62,7 +64,9 @@ export function StampImageDetail({
     <img
       src={imagePath}
       alt={stampName}
-      className={`w-full h-48 object-contain rounded transition-all duration-300 ${blurClass} ${className}`}
+      className={`w-full h-48 object-contain rounded transition-all duration-300 select-none ${blurClass} ${className}`}
+      draggable={false}
+      onContextMenu={(e) => e.preventDefault()}
       onError={(e) => {
         e.currentTarget.src = "https://via.placeholder.com/400x300?text=Stamp";
       }}
