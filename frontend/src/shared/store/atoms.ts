@@ -1,8 +1,8 @@
-import {atom} from "jotai";
-import {atomWithStorage} from "jotai/utils";
-import {UserProfile} from "../types/user";
-import {MY_PROFILE_ID} from "../constants";
-import type {Stamp as APIStamp, User} from "../api/generated/api.schemas";
+import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+import { UserProfile } from "../types/user";
+import { MY_PROFILE_ID } from "../constants";
+import type { Stamp as APIStamp, User } from "../api/generated/api.schemas";
 
 // UI用のStamp型（API型を拡張）
 export interface Stamp extends Omit<APIStamp, 'created_at' | 'updated_at'> {
@@ -79,6 +79,9 @@ export const apiUsersAtom = atom<User[]>([]);
 
 // 各ユーザーの取得済みスタンプ数を記録
 export const userStampCountsAtom = atom<Record<number, number>>({});
+
+// 各ユーザーの取得済みスタンプIDリストを記録（フィルタリング用）
+export const userAcquiredStampsMapAtom = atom<Record<number, number[]>>({});
 
 // 参加者リストのatom（APIデータから派生）
 export const participantsAtom = atom<Participant[]>((get) => {

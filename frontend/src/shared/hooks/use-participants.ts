@@ -9,6 +9,7 @@ import {
   participantsAtom,
   selectedParticipantAtom,
   type Stamp,
+  userAcquiredStampsMapAtom,
   userProfileAtom,
   userStampCountsAtom,
 } from "@/shared/store/atoms";
@@ -27,6 +28,7 @@ export function useParticipants() {
   const setApiUsers = useSetAtom(apiUsersAtom);
   const setApiStamps = useSetAtom(apiStampsAtom);
   const setUserStampCounts = useSetAtom(userStampCountsAtom);
+  const setUserAcquiredStampsMap = useSetAtom(userAcquiredStampsMapAtom);
   const apiStamps = useAtomValue(apiStampsAtom);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,20 +41,28 @@ export function useParticipants() {
         const users = await listUsers();
         setApiUsers(users);
 
-        const countsEntries = await Promise.all(
+        const countsEntries: [number, number][] = [];
+        const stampsMapEntries: [number, number[]][] = [];
+
+        await Promise.all(
           users.map(async (user) => {
             try {
               const response = await listUserStamps(user.id);
               const allStampIds = (response.stamps || []).map((s) => s.stamp_id);
-              const uniqueStampIds = new Set(allStampIds);
-              return [user.id, uniqueStampIds.size] as const;
+              const uniqueStamps = Array.from(new Set(allStampIds));
+
+              countsEntries.push([user.id, uniqueStamps.length]);
+              stampsMapEntries.push([user.id, uniqueStamps]);
             } catch (error) {
               console.error(`Failed to fetch stamps for user ${user.id}:`, error);
-              return [user.id, 0] as const;
+              countsEntries.push([user.id, 0]);
+              stampsMapEntries.push([user.id, []]);
             }
           })
         );
+
         setUserStampCounts(Object.fromEntries(countsEntries));
+        setUserAcquiredStampsMap(Object.fromEntries(stampsMapEntries));
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
