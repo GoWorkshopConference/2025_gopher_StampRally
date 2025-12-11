@@ -1,7 +1,7 @@
 "use client";
 
 import {useCallback, useEffect, useState} from "react";
-import {useRouter} from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import {useAtom, useAtomValue} from "jotai";
 import {UserRegistrationDialog} from "@/widgets/user-registration/ui/user-registration-dialog";
 import {AppLayout} from "@/widgets/app-layout/ui/app-layout";
@@ -13,12 +13,22 @@ const STORAGE_KEY = "kiito-first-visit-popup-seen";
 
 export default function Home() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [showRegistrationDialog, setShowRegistrationDialog] = useAtom(showRegistrationDialogAtom);
     const [userProfile, setUserProfile] = useAtom(userProfileAtom);
     const hasUserProfile = useAtomValue(hasUserProfileAtom);
     const [showFirstVisitPopup, setShowFirstVisitPopup] = useState(false);
 
     useEffect(() => {
+        // Twitter OGP経由など from=twitter が付与されている、またはリファラがtwitterの場合はスタンプページへ
+        const fromParam = searchParams.get("from");
+        const isFromTwitterParam = fromParam === "twitter";
+        const isTwitterReferrer = typeof document !== "undefined" && document.referrer.includes("twitter.com");
+        if (isFromTwitterParam || isTwitterReferrer) {
+            router.replace("/stamps");
+            return;
+        }
+
         // 初めての方へのポップアップをチェック
         try {
             const seen = localStorage.getItem(STORAGE_KEY);
@@ -48,7 +58,7 @@ export default function Home() {
             router.replace("/stamps");
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [hasUserProfile, router]);
+    }, [hasUserProfile, router, searchParams]);
 
     const handleFirstVisitPopupClose = useCallback(() => {
         setShowFirstVisitPopup(false);

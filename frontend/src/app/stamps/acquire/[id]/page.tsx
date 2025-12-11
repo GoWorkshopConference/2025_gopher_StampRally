@@ -291,58 +291,12 @@ export default function AcquireStampPage() {
     }
   };
 
-  // Xでシェア（Web Share API使用可能な場合は直接共有）
+  // Xでシェア（OGP付きURLを共有）
   const shareOnX = async () => {
-    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp?.name}」をGETしました！ #GoWorkshopConference`;
-
-    try {
-      const blob = await generateCardImage();
-      if (!blob) {
-        alert('画像の生成に失敗しました');
-        return;
-      }
-
-      // Web Share API が使用可能かチェック（モバイルなど）
-      if (navigator.share && navigator.canShare) {
-        try {
-          console.log('[SHARE] Attempting Web Share API...');
-          const file = new File([blob], `gopher-stamp-${stampId}.png`, { type: 'image/png' });
-          const shareData = {
-            text: text,
-            files: [file],
-          };
-
-          // ブラウザが画像共有をサポートしているか確認
-          if (navigator.canShare(shareData)) {
-            console.log('[SHARE] Using Web Share API with image');
-            await navigator.share(shareData);
-            return;
-          }
-        } catch (error) {
-          console.log('[SHARE] Web Share API failed, trying clipboard method:', error);
-        }
-      }
-
-      // クリップボードに画像をコピー
-      const copied = await copyImageToClipboard(blob);
-
-      if (copied) {
-        // 画像をコピーできた場合
-        alert('画像をクリップボードにコピーしました！\nXを開いて画像を貼り付けてください。');
-        // Xを開く
-        setTimeout(() => {
-          const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-          window.open(twitterUrl, '_blank', 'width=550,height=420');
-        }, 500);
-      } else {
-        // クリップボードにコピーできない場合
-        console.log('[SHARE] Clipboard API not available');
-        alert('このブラウザでは画像をクリップボードにコピーできません。\n別のブラウザでお試しください。');
-      }
-    } catch (error) {
-      console.error('[SHARE] Share failed:', error);
-      alert('シェアに失敗しました。時間をおいて再度お試しください。');
-    }
+    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp?.name ?? ""}」をGETしました！ #GoWorkshopConference`;
+    const shareUrl = `${window.location.origin}/?from=twitter`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(twitterUrl, '_blank', 'width=550,height=420');
   };
 
   // LocalStorageから直接ユーザープロフィールを取得
@@ -442,7 +396,7 @@ export default function AcquireStampPage() {
     if (typeof window !== 'undefined') {
       const accessKey = `stamp_access_${stampId}`;
       const hasAccess = sessionStorage.getItem(accessKey);
-      
+
       if (!hasAccess) {
         console.log('[ACQUIRE] Invalid access: No session token found');
         setError({
@@ -454,7 +408,7 @@ export default function AcquireStampPage() {
       }
 
       // オプション: 一度使用したら無効化する場合（リロード対策など）
-      // sessionStorage.removeItem(accessKey); 
+      // sessionStorage.removeItem(accessKey);
       // ※ リロードでエラーになると不便な場合は削除しない
     }
 
@@ -473,8 +427,9 @@ export default function AcquireStampPage() {
         console.log(`[ACQUIRE] Stamp ${stampId} already acquired:`, isAlreadyAcquired);
 
         if (isAlreadyAcquired) {
-          console.log('[ACQUIRE] Stamp already acquired, showing message');
-          setState("already_acquired");
+          console.log('[ACQUIRE] Stamp already acquired, treating as success (no backend/local storage writes)');
+          setState("success");
+          setShowAnimation(true);
           return;
         }
 

@@ -29,14 +29,25 @@ export function StampImage({
   const sizeClass = sizeClasses[size];
   const blurClass = isAcquired ? "" : `grayscale ${blurIntensity[size]}`;
   const shapeClass = size === "large" ? "rounded" : "rounded-full";
+  const disableInteractions = !isAcquired;
+  const interactionClass = disableInteractions ? "select-none" : "";
 
   return (
     <img
       src={imagePath}
       alt={stampName}
-      className={`${sizeClass} ${shapeClass} object-cover transition-all duration-300 select-none ${blurClass} ${className}`}
-      draggable={false}
-      onContextMenu={(e) => e.preventDefault()}
+      className={`${sizeClass} ${shapeClass} object-cover transition-all duration-300 ${interactionClass} ${blurClass} ${className}`}
+      draggable={disableInteractions ? false : undefined}
+      onContextMenu={disableInteractions ? (e) => e.preventDefault() : undefined}
+      style={
+        disableInteractions
+          ? {
+              WebkitUserSelect: "none",
+              userSelect: "none",
+              WebkitTouchCallout: "none",
+            }
+          : undefined
+      }
       onError={(e) => {
         const size = sizeClass.includes("12") ? 48 : sizeClass.includes("24") ? 96 : 400;
         e.currentTarget.src = `https://via.placeholder.com/${size}?text=Stamp`;
@@ -59,14 +70,25 @@ export function StampImageDetail({
 }: StampImageDetailProps) {
   const imagePath = getStampImagePath(stampName);
   const blurClass = isAcquired ? "" : "grayscale blur-lg";
+  const disableInteractions = !isAcquired;
+  const interactionClass = disableInteractions ? "select-none" : "";
 
   return (
     <img
       src={imagePath}
       alt={stampName}
-      className={`w-full h-48 object-contain rounded transition-all duration-300 select-none ${blurClass} ${className}`}
-      draggable={false}
-      onContextMenu={(e) => e.preventDefault()}
+      className={`w-full h-48 object-contain rounded transition-all duration-300 ${interactionClass} ${blurClass} ${className}`}
+      draggable={disableInteractions ? false : undefined}
+      onContextMenu={disableInteractions ? (e) => e.preventDefault() : undefined}
+      style={
+        disableInteractions
+          ? {
+              WebkitUserSelect: "none",
+              userSelect: "none",
+              WebkitTouchCallout: "none",
+            }
+          : undefined
+      }
       onError={(e) => {
         e.currentTarget.src = "https://via.placeholder.com/400x300?text=Stamp";
       }}
