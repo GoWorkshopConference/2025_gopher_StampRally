@@ -1,6 +1,6 @@
 "use client";
 
-import {useCallback, useEffect, useState} from "react";
+import {Suspense, useCallback, useEffect, useState} from "react";
 import {useRouter, useSearchParams} from "next/navigation";
 import {useAtom, useAtomValue} from "jotai";
 import {UserRegistrationDialog} from "@/widgets/user-registration/ui/user-registration-dialog";
@@ -8,12 +8,24 @@ import {AppLayout} from "@/widgets/app-layout/ui/app-layout";
 import {FirstVisitPopup} from "@/shared/ui/first-visit-popup";
 import {hasUserProfileAtom, showRegistrationDialogAtom, userProfileAtom,} from "@/shared/store/atoms";
 import {UserProfile} from "@/shared/types/user";
-import {hasUserProfile} from "@/shared/lib/storage";
 
 const STORAGE_KEY = "kiito-first-visit-popup-seen";
 const USER_PROFILE_STORAGE_KEY = "gopher_stamp_rally_user_profile";
 
-export default function Home() {
+// localStorageから直接ユーザープロフィールの存在をチェックする関数
+function checkStoredUserProfile(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+        const storedProfile = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+        if (!storedProfile) return false;
+        const parsed = JSON.parse(storedProfile);
+        return parsed && parsed.id;
+    } catch {
+        return false;
+    }
+}
+
+function HomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [showRegistrationDialog, setShowRegistrationDialog] = useAtom(showRegistrationDialogAtom);
@@ -32,20 +44,11 @@ export default function Home() {
         }
 
         // localStorageから直接ユーザー情報をチェック（atomの初期化を待たない）
-        let hasStoredProfile = false;
-        try {
-            const storedProfile = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
-            if (storedProfile) {
-                const parsed = JSON.parse(storedProfile);
-                if (parsed && parsed.id) {
-                    hasStoredProfile = true;
-                    // プロフィールがある場合は即座にスタンプラリーページにリダイレクト
-                    router.replace("/stamps");
-                    return;
-                }
-            }
-        } catch {
-            // パースエラーなどは無視
+        const hasStoredProfile = checkStoredUserProfile();
+        if (hasStoredProfile) {
+            // プロフィールがある場合は即座にスタンプラリーページにリダイレクト
+            router.replace("/stamps");
+            return;
         }
 
         // 初めての方へのポップアップをチェック
@@ -89,19 +92,12 @@ export default function Home() {
         }
         // ポップアップが閉じられた後にユーザー登録ダイアログを表示
         // localStorageにプロフィールがない場合のみ表示
-        try {
-            const storedProfile = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
-            if (!storedProfile && !hasUserProfile) {
-                setShowRegistrationDialog(true);
-            } else if (storedProfile || hasUserProfile) {
-                // プロフィールがある場合はスタンプラリーページにリダイレクト
-                router.replace("/stamps");
-            }
-        } catch {
-            // エラー時は登録ダイアログを表示
-            if (!hasUserProfile) {
-                setShowRegistrationDialog(true);
-            }
+        const hasStoredProfile = checkStoredUserProfile();
+        if (!hasStoredProfile && !hasUserProfile) {
+            setShowRegistrationDialog(true);
+        } else if (hasStoredProfile || hasUserProfile) {
+            // プロフィールがある場合はスタンプラリーページにリダイレクト
+            router.replace("/stamps");
         }
     }, [hasUserProfile, setShowRegistrationDialog, router]);
 
@@ -120,9 +116,25 @@ export default function Home() {
                 <FirstVisitPopup onClose={handleFirstVisitPopupClose} />
             )}
             <UserRegistrationDialog
-                open={showRegistrationDialog && !showFirstVisitPopup && !hasUserProfile()}
+                open={showRegistrationDialog && !showFirstVisitPopup && !checkStoredUserProfile() && !hasUserProfile}
                 onComplete={handleRegistrationComplete}
             />
         </AppLayout>
+    );
+}
+
+export default function Home() {
+    return (
+        <Suspense fallback={
+            <AppLayout>
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="text-center">
+                        <p className="text-gray-600">読み込み中...</p>
+                    </div>
+                </div>
+            </AppLayout>
+        }>
+            <HomeContent />
+        </Suspense>
     );
 }

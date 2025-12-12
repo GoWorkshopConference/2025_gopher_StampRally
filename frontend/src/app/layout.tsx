@@ -3,6 +3,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://2025-gopher-stamp-rally.vercel.app"),
   title: "Gophers Stamp Rally",
   description: "GoWorkShopConferenceのGophers Stamp Rally企画",
   openGraph: {
