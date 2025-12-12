@@ -293,11 +293,24 @@ export default function AcquireStampPage() {
 
   // Xでシェア（OGP付きURLを共有）
   const shareOnX = async () => {
-    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp?.name ?? ""}」をGETしました！ #GoWorkshopConference`;
-    const shareUrl = `${window.location.origin}/?from=twitter`;
+    if (!stamp) return;
+    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GoWorkshopConference`;
+    // スタンプ取得ページのURLを共有（OGP画像が自動的に表示される）
+    const shareUrl = `${window.location.origin}/stamps/acquire/${stampId}?go=haukfhakjh`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(twitterUrl, '_blank', 'width=550,height=420');
   };
+
+  // Twitter OGP経由など go=haukfhakjh が付与されている、またはリファラがx.comの場合はスタンプページへリダイレクト
+  useEffect(() => {
+    const goParam = searchParams.get("go");
+    const isFromTwitterParam = goParam === "haukfhakjh";
+    const isTwitterReferrer = typeof document !== "undefined" && document.referrer.includes("x.com");
+    if (isFromTwitterParam || isTwitterReferrer) {
+      router.replace("/stamps");
+      return;
+    }
+  }, [searchParams, router]);
 
   // LocalStorageから直接ユーザープロフィールを取得
   useEffect(() => {

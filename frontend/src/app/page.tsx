@@ -35,9 +35,9 @@ function HomeContent() {
 
     useEffect(() => {
         // Twitter OGP経由など from=twitter が付与されている、またはリファラがtwitterの場合はスタンプページへ
-        const fromParam = searchParams.get("from");
-        const isFromTwitterParam = fromParam === "twitter";
-        const isTwitterReferrer = typeof document !== "undefined" && document.referrer.includes("twitter.com");
+        const fromParam = searchParams.get("go");
+        const isFromTwitterParam = fromParam === "haukfhakjh";
+        const isTwitterReferrer = typeof document !== "undefined" && document.referrer.includes("x.com");
         if (isFromTwitterParam || isTwitterReferrer) {
             router.replace("/stamps");
             return;
