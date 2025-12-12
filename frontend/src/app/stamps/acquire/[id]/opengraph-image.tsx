@@ -119,7 +119,7 @@ export default async function Image({
                 marginTop: 20,
               }}
             >
-              Gophers Stamp Rally #GoWorkshopConference
+              Gophers Stamp Rally #GWC2025
             </div>
           </div>
         </div>

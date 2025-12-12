@@ -176,7 +176,7 @@ export default function AcquireStampPage() {
           ctx.fillStyle = '#9ca3af';
           ctx.font = '14px system-ui, sans-serif';
           ctx.fillText('Gophers Stamp Rally', width / 2, 450);
-          ctx.fillText('#GoWorkshopConference', width / 2, 480);
+          ctx.fillText('#GWC2025', width / 2, 480);
 
           // Blobに変換
           canvas.toBlob((blob) => {
@@ -230,7 +230,7 @@ export default function AcquireStampPage() {
           ctx.fillStyle = '#9ca3af';
           ctx.font = '14px system-ui, sans-serif';
           ctx.fillText('Gophers Stamp Rally', width / 2, 450);
-          ctx.fillText('#GoWorkshopConference', width / 2, 480);
+          ctx.fillText('#GWC2025', width / 2, 480);
 
           canvas.toBlob((blob) => {
             console.log('[IMAGE] Placeholder image generated, blob size:', blob?.size);
@@ -294,7 +294,7 @@ export default function AcquireStampPage() {
   // Xでシェア（OGP付きURLを共有）
   const shareOnX = async () => {
     if (!stamp) return;
-    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GoWorkshopConference`;
+    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GWC2025`;
     // スタンプ取得ページのURLを共有（OGP画像が自動的に表示される）
     const shareUrl = `${window.location.origin}/stamps/acquire/${stampId}?go=haukfhakjh`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     return {
       title: `スタンプ「${stamp.name}」をGET！ - Gophers Stamp Rally`,
-      description: `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GoWorkshopConference`,
+      description: `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GWC2025`,
       openGraph: {
         title: `スタンプ「${stamp.name}」をGET！`,
         description: `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！`,

@@ -170,7 +170,7 @@ export function StampDetailDialog({
           ctx.fillStyle = '#9ca3af';
           ctx.font = '14px system-ui, sans-serif';
           ctx.fillText('Gophers Stamp Rally', width / 2, 450);
-          ctx.fillText('#GoWorkshopConference', width / 2, 480);
+          ctx.fillText('#GWC2025', width / 2, 480);
 
           canvas.toBlob((blob) => {
             setIsGeneratingImage(false);
@@ -215,7 +215,7 @@ export function StampDetailDialog({
           ctx.fillStyle = '#9ca3af';
           ctx.font = '14px system-ui, sans-serif';
           ctx.fillText('Gophers Stamp Rally', width / 2, 450);
-          ctx.fillText('#GoWorkshopConference', width / 2, 480);
+          ctx.fillText('#GWC2025', width / 2, 480);
 
           canvas.toBlob((blob) => {
             setIsGeneratingImage(false);
@@ -253,7 +253,7 @@ export function StampDetailDialog({
 
   // Xでシェア（OGP付きURLを共有）
   const shareOnX = async () => {
-    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GoWorkshopConference`;
+    const text = `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！ #GWC2025`;
     const shareUrl = `${window.location.origin}/stamps/acquire/${stamp.id}?go=haukfhakjh`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(twitterUrl, '_blank', 'width=550,height=420');
