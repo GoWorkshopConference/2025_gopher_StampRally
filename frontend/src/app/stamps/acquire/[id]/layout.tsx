@@ -19,8 +19,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const stamp = await getStamp(stampId);
     const stampImagePath = getStampImagePath(stamp.name);
-    // metadataBaseが設定されているので相対パスでOK
-    const imageUrl = stampImagePath;
+    // 絶対URLを生成（metadataBaseが設定されていても明示的に指定）
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://2025-gopher-stamp-rally.vercel.app";
+    const imageUrl = `${baseUrl}${stampImagePath}`;
 
     return {
       title: `スタンプ「${stamp.name}」をGET！ - Gophers Stamp Rally`,
@@ -28,6 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: `スタンプ「${stamp.name}」をGET！`,
         description: `🎉 Gophers Stamp Rally でスタンプ「${stamp.name}」をGETしました！`,
+        url: `${baseUrl}/stamps/acquire/${stampId}`,
+        siteName: "Gophers Stamp Rally",
         images: [
           {
             url: imageUrl,
@@ -37,6 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           },
         ],
         type: "website",
+        locale: "ja_JP",
       },
       twitter: {
         card: "summary_large_image",
