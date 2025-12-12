@@ -8,8 +8,10 @@ import {AppLayout} from "@/widgets/app-layout/ui/app-layout";
 import {FirstVisitPopup} from "@/shared/ui/first-visit-popup";
 import {hasUserProfileAtom, showRegistrationDialogAtom, userProfileAtom,} from "@/shared/store/atoms";
 import {UserProfile} from "@/shared/types/user";
+import {hasUserProfile} from "@/shared/lib/storage";
 
 const STORAGE_KEY = "kiito-first-visit-popup-seen";
+const USER_PROFILE_STORAGE_KEY = "gopher_stamp_rally_user_profile";
 
 export default function Home() {
     const router = useRouter();
@@ -27,6 +29,23 @@ export default function Home() {
         if (isFromTwitterParam || isTwitterReferrer) {
             router.replace("/stamps");
             return;
+        }
+
+        // localStorageから直接ユーザー情報をチェック（atomの初期化を待たない）
+        let hasStoredProfile = false;
+        try {
+            const storedProfile = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+            if (storedProfile) {
+                const parsed = JSON.parse(storedProfile);
+                if (parsed && parsed.id) {
+                    hasStoredProfile = true;
+                    // プロフィールがある場合は即座にスタンプラリーページにリダイレクト
+                    router.replace("/stamps");
+                    return;
+                }
+            }
+        } catch {
+            // パースエラーなどは無視
         }
 
         // 初めての方へのポップアップをチェック
@@ -51,9 +70,10 @@ export default function Home() {
         }
 
         // 初回起動時にユーザープロフィールをチェック
-        if (!hasUserProfile) {
+        // localStorageにプロフィールがない場合のみ登録ダイアログを表示
+        if (!hasStoredProfile && !hasUserProfile) {
             setShowRegistrationDialog(true);
-        } else {
+        } else if (hasUserProfile || hasStoredProfile) {
             // プロフィールがある場合はスタンプラリーページにリダイレクト
             router.replace("/stamps");
         }
@@ -68,10 +88,22 @@ export default function Home() {
             // 無視
         }
         // ポップアップが閉じられた後にユーザー登録ダイアログを表示
-        if (!hasUserProfile) {
-            setShowRegistrationDialog(true);
+        // localStorageにプロフィールがない場合のみ表示
+        try {
+            const storedProfile = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+            if (!storedProfile && !hasUserProfile) {
+                setShowRegistrationDialog(true);
+            } else if (storedProfile || hasUserProfile) {
+                // プロフィールがある場合はスタンプラリーページにリダイレクト
+                router.replace("/stamps");
+            }
+        } catch {
+            // エラー時は登録ダイアログを表示
+            if (!hasUserProfile) {
+                setShowRegistrationDialog(true);
+            }
         }
-    }, [hasUserProfile, setShowRegistrationDialog]);
+    }, [hasUserProfile, setShowRegistrationDialog, router]);
 
     const handleRegistrationComplete = useCallback(
         (profile: UserProfile) => {
@@ -88,7 +120,7 @@ export default function Home() {
                 <FirstVisitPopup onClose={handleFirstVisitPopupClose} />
             )}
             <UserRegistrationDialog
-                open={showRegistrationDialog && !showFirstVisitPopup}
+                open={showRegistrationDialog && !showFirstVisitPopup && !hasUserProfile()}
                 onComplete={handleRegistrationComplete}
             />
         </AppLayout>
