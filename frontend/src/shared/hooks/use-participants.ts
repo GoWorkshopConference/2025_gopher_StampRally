@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
@@ -20,6 +20,18 @@ import { listUserStamps } from "@/shared/api/generated/user-stamps/user-stamps";
 import { codesToLabels } from "@/shared/types/user";
 import { customInstance } from "@/shared/api/mutator";
 
+// UserWithStamps型を共有できるように外部定義
+type UserWithStamps = {
+  id: number;
+  name: string;
+  twitter_id?: string;
+  favorite_go_feature?: string;
+  icon?: string;
+  created_at?: string;
+  updated_at?: string;
+  stamp_ids?: number[];
+};
+
 export function useParticipants() {
   const router = useRouter();
   const participants = useAtomValue(participantsAtom);
@@ -31,30 +43,52 @@ export function useParticipants() {
   const setUserStampCounts = useSetAtom(userStampCountsAtom);
   const setUserAcquiredStampsMap = useSetAtom(userAcquiredStampsMapAtom);
   const apiStamps = useAtomValue(apiStampsAtom);
+  const apiUsers = useAtomValue(apiUsersAtom);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const fetchAbortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const stampsResponse = await listStamps({ limit: 100, offset: 0 });
-        setApiStamps(stampsResponse.stamps || []);
+    // 既にデータが存在する場合は再取得しない（初期化済みの場合）
+    if (isInitialized) {
+      return;
+    }
 
-        // Use optimized endpoint with stamp counts included
-        type UserWithStamps = {
-          id: number;
-          name: string;
-          twitter_id?: string;
-          favorite_go_feature?: string;
-          icon?: string;
-          created_at?: string;
-          updated_at?: string;
-          stamp_ids?: number[];
-        };
-        const usersWithStamps = await customInstance<UserWithStamps[]>({
-          url: "/users",
-          method: "GET",
-          params: { include_stamp_counts: "true" },
-        });
+    // データが既に存在する場合はローディングを解除
+    if (apiStamps.length > 0 && apiUsers.length > 0) {
+      setIsInitialized(true);
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      // 前回のリクエストをキャンセル
+      if (fetchAbortControllerRef.current) {
+        fetchAbortControllerRef.current.abort();
+      }
+
+      // 新しいAbortControllerを作成
+      const abortController = new AbortController();
+      fetchAbortControllerRef.current = abortController;
+
+      try {
+        // スタンプとユーザーを並列で取得
+        const [stampsResponse, usersWithStamps] = await Promise.all([
+          listStamps({ limit: 100, offset: 0 }),
+          customInstance<UserWithStamps[]>({
+            url: "/users",
+            method: "GET",
+            params: { include_stamp_counts: "true" },
+            signal: abortController.signal,
+          }),
+        ]);
+
+        // リクエストがキャンセルされた場合は処理を中断
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        setApiStamps(stampsResponse.stamps || []);
 
         // Extract users and stamp information
         const users = usersWithStamps.map((item: UserWithStamps) => ({
@@ -81,15 +115,31 @@ export function useParticipants() {
 
         setUserStampCounts(Object.fromEntries(countsEntries));
         setUserAcquiredStampsMap(Object.fromEntries(stampsMapEntries));
+        setIsInitialized(true);
       } catch (error) {
+        // AbortErrorの場合はログに出力しない
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
         console.error("Failed to fetch data:", error);
       } finally {
-        setIsLoading(false);
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchData();
-  }, [setApiUsers, setApiStamps, setUserStampCounts, setUserAcquiredStampsMap]);
+
+    // クリーンアップ関数
+    return () => {
+      if (fetchAbortControllerRef.current) {
+        fetchAbortControllerRef.current.abort();
+      }
+    };
+  }, [setApiUsers, setApiStamps, setUserStampCounts, setUserAcquiredStampsMap, apiStamps.length, apiUsers.length, isInitialized]);
+
+  const userAcquiredStampsMap = useAtomValue(userAcquiredStampsMapAtom);
 
   const handleParticipantClick = useCallback(
     async (participantId: number) => {
@@ -102,12 +152,13 @@ export function useParticipants() {
       }
 
       try {
-        const userDetail = await getUser(participantId);
-
+        // 既に取得済みのスタンプ情報を使用（キャッシュから）
+        const cachedStampIds = userAcquiredStampsMap[participantId];
         let acquiredStampIds: Set<number>;
         const isMyself = userProfile && participantId === Number(userProfile.id);
 
         if (isMyself) {
+          // 自分のスタンプはlocalStorageから取得
           const userStampsStorage = localStorage.getItem("gopher_stamp_rally_user_stamps");
           if (userStampsStorage) {
             const userStampsMap = JSON.parse(userStampsStorage);
@@ -116,11 +167,18 @@ export function useParticipants() {
           } else {
             acquiredStampIds = new Set();
           }
+        } else if (cachedStampIds !== undefined) {
+          // キャッシュからスタンプIDを取得（undefinedでない限りキャッシュとして扱う）
+          acquiredStampIds = new Set(cachedStampIds);
         } else {
+          // キャッシュがない場合のみAPIから取得
           const userStampsResponse = await listUserStamps(participantId);
           const allStampIds = (userStampsResponse.stamps || []).map((s) => s.stamp_id);
           acquiredStampIds = new Set(allStampIds);
         }
+
+        // ユーザー詳細情報を取得（詳細情報が必要なため常にAPIから取得）
+        const userDetail = await getUser(participantId);
 
         const stamps: Stamp[] = apiStamps.map((stamp) => ({
           id: stamp.id,
@@ -148,7 +206,7 @@ export function useParticipants() {
         alert("ユーザー詳細の取得に失敗しました。時間をおいて再度お試しください。");
       }
     },
-    [userProfile, router, setSelectedParticipant, setIsDetailOpen, apiStamps]
+    [userProfile, router, setSelectedParticipant, setIsDetailOpen, apiStamps, userAcquiredStampsMap]
   );
 
   const handleCloseDetail = useCallback(() => {
