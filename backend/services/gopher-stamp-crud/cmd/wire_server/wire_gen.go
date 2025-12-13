@@ -29,8 +29,8 @@ func InitializeServer() (*gin.Engine, error) {
 		return nil, err
 	}
 	userRepository := NewUserRepository(db)
-	userUsecase := usecase.NewUserUsecase(userRepository)
 	userStampRepository := NewUserStampRepository(db)
+	userUsecase := usecase.NewUserUsecase(userRepository, userStampRepository)
 	stampRepository := NewStampRepository(db)
 	userStampUseCase := usecase.NewUserStampUseCase(userStampRepository, userRepository, stampRepository)
 	stampUseCase := usecase.NewStampUseCase(stampRepository)

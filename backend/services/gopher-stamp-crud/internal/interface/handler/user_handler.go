@@ -116,6 +116,52 @@ func (h *UserHandler) GetUser(c *gin.Context, id int64) {
 
 // (GET /users) Swagger生成のインターフェースに合わせたメソッド
 func (h *UserHandler) ListUsers(c *gin.Context) {
+	// Check if include_stamp_counts query parameter is present
+	includeStampCounts := c.Query("include_stamp_counts") == "true"
+
+	if includeStampCounts {
+		users, userStampMap, err := h.userUsecase.GetAllWithStampCounts(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, openapi.Error{
+				Code:    "INTERNAL_ERROR",
+				Message: err.Error(),
+			})
+			return
+		}
+
+		// Create response with stamp counts
+		type UserWithStamps struct {
+			openapi.User
+			StampIds []int64 `json:"stamp_ids,omitempty"`
+		}
+
+		swaggerUsers := make([]UserWithStamps, len(users))
+		for i, user := range users {
+			stampIDs := userStampMap[user.ID]
+			stampIDsInt64 := make([]int64, len(stampIDs))
+			for j, id := range stampIDs {
+				stampIDsInt64[j] = int64(id)
+			}
+
+			swaggerUsers[i] = UserWithStamps{
+				User: openapi.User{
+					Id:                int64(user.ID),
+					Name:              user.Name,
+					TwitterId:         user.TwitterID,
+					FavoriteGoFeature: user.FavoriteGoFeature,
+					Icon:              user.Icon,
+					CreatedAt:         &user.CreatedAt,
+					UpdatedAt:         &user.UpdatedAt,
+				},
+				StampIds: stampIDsInt64,
+			}
+		}
+
+		c.JSON(http.StatusOK, swaggerUsers)
+		return
+	}
+
+	// Original behavior without stamp counts
 	users, err := h.userUsecase.GetAll(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, openapi.Error{
