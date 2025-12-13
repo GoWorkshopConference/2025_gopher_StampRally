@@ -11,16 +11,21 @@ type UserUsecase interface {
 	Create(ctx context.Context, name string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error)
 	GetByID(ctx context.Context, id uint) (*entity.User, error)
 	GetAll(ctx context.Context) ([]*entity.User, error)
+	GetAllWithStampCounts(ctx context.Context) ([]*entity.User, map[uint][]uint, error)
 	Update(ctx context.Context, id uint, name *string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error)
 	Delete(ctx context.Context, id uint) error
 }
 
 type userUsecase struct {
-	userRepo repository.UserRepository
+	userRepo      repository.UserRepository
+	userStampRepo repository.UserStampRepository
 }
 
-func NewUserUsecase(userRepo repository.UserRepository) UserUsecase {
-	return &userUsecase{userRepo: userRepo}
+func NewUserUsecase(userRepo repository.UserRepository, userStampRepo repository.UserStampRepository) UserUsecase {
+	return &userUsecase{
+		userRepo:      userRepo,
+		userStampRepo: userStampRepo,
+	}
 }
 
 func (u *userUsecase) Create(ctx context.Context, name string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error) {
@@ -42,6 +47,20 @@ func (u *userUsecase) GetByID(ctx context.Context, id uint) (*entity.User, error
 
 func (u *userUsecase) GetAll(ctx context.Context) ([]*entity.User, error) {
 	return u.userRepo.FindAll(ctx)
+}
+
+func (u *userUsecase) GetAllWithStampCounts(ctx context.Context) ([]*entity.User, map[uint][]uint, error) {
+	users, err := u.userRepo.FindAll(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	userStampMap, err := u.userStampRepo.FindAllUserStampIDs(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return users, userStampMap, nil
 }
 
 func (u *userUsecase) Update(ctx context.Context, id uint, name *string, twitterID *string, favoriteGoFeature *string, icon *string) (*entity.User, error) {

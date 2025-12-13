@@ -18,6 +18,7 @@ import { listUsers, getUser } from "@/shared/api/generated/users/users";
 import { listStamps } from "@/shared/api/generated/stamps/stamps";
 import { listUserStamps } from "@/shared/api/generated/user-stamps/user-stamps";
 import { codesToLabels } from "@/shared/types/user";
+import { customInstance } from "@/shared/api/mutator";
 
 export function useParticipants() {
   const router = useRouter();
@@ -38,28 +39,45 @@ export function useParticipants() {
         const stampsResponse = await listStamps({ limit: 100, offset: 0 });
         setApiStamps(stampsResponse.stamps || []);
 
-        const users = await listUsers();
+        // Use optimized endpoint with stamp counts included
+        type UserWithStamps = {
+          id: number;
+          name: string;
+          twitter_id?: string;
+          favorite_go_feature?: string;
+          icon?: string;
+          created_at?: string;
+          updated_at?: string;
+          stamp_ids?: number[];
+        };
+        const usersWithStamps = await customInstance<UserWithStamps[]>({
+          url: "/users",
+          method: "GET",
+          params: { include_stamp_counts: "true" },
+        });
+
+        // Extract users and stamp information
+        const users = usersWithStamps.map((item: UserWithStamps) => ({
+          id: item.id,
+          name: item.name,
+          twitter_id: item.twitter_id,
+          favorite_go_feature: item.favorite_go_feature,
+          icon: item.icon,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+        }));
         setApiUsers(users);
 
+        // Process stamp counts and stamp IDs
         const countsEntries: [number, number][] = [];
         const stampsMapEntries: [number, number[]][] = [];
 
-        await Promise.all(
-          users.map(async (user) => {
-            try {
-              const response = await listUserStamps(user.id);
-              const allStampIds = (response.stamps || []).map((s) => s.stamp_id);
-              const uniqueStamps = Array.from(new Set(allStampIds));
-
-              countsEntries.push([user.id, uniqueStamps.length]);
-              stampsMapEntries.push([user.id, uniqueStamps]);
-            } catch (error) {
-              console.error(`Failed to fetch stamps for user ${user.id}:`, error);
-              countsEntries.push([user.id, 0]);
-              stampsMapEntries.push([user.id, []]);
-            }
-          })
-        );
+        usersWithStamps.forEach((item: UserWithStamps) => {
+          const stampIds = item.stamp_ids || [];
+          const uniqueStamps = Array.from(new Set(stampIds)) as number[];
+          countsEntries.push([item.id, uniqueStamps.length]);
+          stampsMapEntries.push([item.id, uniqueStamps]);
+        });
 
         setUserStampCounts(Object.fromEntries(countsEntries));
         setUserAcquiredStampsMap(Object.fromEntries(stampsMapEntries));
@@ -71,7 +89,7 @@ export function useParticipants() {
     };
 
     fetchData();
-  }, [setApiUsers, setApiStamps, setUserStampCounts]);
+  }, [setApiUsers, setApiStamps, setUserStampCounts, setUserAcquiredStampsMap]);
 
   const handleParticipantClick = useCallback(
     async (participantId: number) => {
@@ -146,5 +164,6 @@ export function useParticipants() {
     handleCloseDetail,
   };
 }
+
 
 

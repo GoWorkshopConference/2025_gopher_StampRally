@@ -10,4 +10,5 @@ type UserStampRepository interface {
 	FindByUserID(ctx context.Context, userID uint) ([]entity.UserStamp, error)
 	Create(ctx context.Context, userStamp *entity.UserStamp) error
 	ExistsByUserIDAndStampID(ctx context.Context, userID, stampID uint) (bool, error)
+	FindAllUserStampIDs(ctx context.Context) (map[uint][]uint, error)
 }

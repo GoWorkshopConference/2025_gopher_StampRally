@@ -38,3 +38,26 @@ func (r *userStampRepository) ExistsByUserIDAndStampID(ctx context.Context, user
 		Count(&count).Error
 	return count > 0, err
 }
+
+func (r *userStampRepository) FindAllUserStampIDs(ctx context.Context) (map[uint][]uint, error) {
+	var results []struct {
+		UserID  uint
+		StampID uint
+	}
+
+	err := r.db.WithContext(ctx).
+		Model(&entity.UserStamp{}).
+		Select("user_id, stamp_id").
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	userStampMap := make(map[uint][]uint)
+	for _, result := range results {
+		userStampMap[result.UserID] = append(userStampMap[result.UserID], result.StampID)
+	}
+
+	return userStampMap, nil
+}

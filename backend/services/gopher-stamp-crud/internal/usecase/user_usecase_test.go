@@ -16,7 +16,8 @@ func TestUserUsecase_Create(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mock.NewMockUserRepository(ctrl)
-	usecase := NewUserUsecase(mockRepo)
+	mockUserStampRepo := mock.NewMockUserStampRepository(ctrl)
+	usecase := NewUserUsecase(mockRepo, mockUserStampRepo)
 
 	tests := []struct {
 		name     string
@@ -75,7 +76,8 @@ func TestUserUsecase_GetByID(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mock.NewMockUserRepository(ctrl)
-	usecase := NewUserUsecase(mockRepo)
+	mockUserStampRepo := mock.NewMockUserStampRepository(ctrl)
+	usecase := NewUserUsecase(mockRepo, mockUserStampRepo)
 
 	tests := []struct {
 		name    string
@@ -134,7 +136,8 @@ func TestUserUsecase_GetAll(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mock.NewMockUserRepository(ctrl)
-	usecase := NewUserUsecase(mockRepo)
+	mockUserStampRepo := mock.NewMockUserStampRepository(ctrl)
+	usecase := NewUserUsecase(mockRepo, mockUserStampRepo)
 
 	tests := []struct {
 		name    string
@@ -200,7 +203,8 @@ func TestUserUsecase_Update(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mock.NewMockUserRepository(ctrl)
-	usecase := NewUserUsecase(mockRepo)
+	mockUserStampRepo := mock.NewMockUserStampRepository(ctrl)
+	usecase := NewUserUsecase(mockRepo, mockUserStampRepo)
 
 	updatedName := "Updated User"
 	updatedTwitterID := "updated_twitter"
@@ -332,7 +336,8 @@ func TestUserUsecase_Delete(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := mock.NewMockUserRepository(ctrl)
-	usecase := NewUserUsecase(mockRepo)
+	mockUserStampRepo := mock.NewMockUserStampRepository(ctrl)
+	usecase := NewUserUsecase(mockRepo, mockUserStampRepo)
 
 	tests := []struct {
 		name    string

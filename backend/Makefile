@@ -59,12 +59,13 @@ swagger-check:
 
 mock-gen:
 	@echo "Generating mocks..."
-	@for file in $$(find $(MOCK_SOURCE_DIR) -name "*.go"); do \
+	@cd services/gopher-stamp-crud && \
+	for file in $$(find internal/domain/repository -name "*.go"); do \
 		base_name=$$(basename $$file .go); \
 		self_package=$$(go list -m)/$(MOCK_PACKAGE); \
 		go run github.com/golang/mock/mockgen \
 			-source=$$file \
-			-destination=$(MOCK_DEST_DIR)/mock_$$base_name.go \
+			-destination=internal/domain/mock_repository/mock_$$base_name.go \
 			-package=$(MOCK_PACKAGE) \
 			-self_package=$$self_package; \
 	done
@@ -72,22 +73,23 @@ mock-gen:
 
 mock-check:
 	@echo "Checking if mock files are up to date..."
-	@mkdir -p $(MOCK_DEST_DIR)/tmp
-	@status=0; \
-	for file in $$(find $(MOCK_SOURCE_DIR) -name "*.go"); do \
+	@cd services/gopher-stamp-crud && \
+	mkdir -p internal/domain/mock_repository/tmp && \
+	status=0; \
+	for file in $$(find internal/domain/repository -name "*.go"); do \
 		base_name=$$(basename $$file .go); \
 		self_package=$$(go list -m)/$(MOCK_PACKAGE); \
 		go run github.com/golang/mock/mockgen \
 			-source=$$file \
-			-destination=$(MOCK_DEST_DIR)/tmp/mock_$$base_name.go \
+			-destination=internal/domain/mock_repository/tmp/mock_$$base_name.go \
 			-package=$(MOCK_PACKAGE) \
 			-self_package=$$self_package; \
-		if [ ! -f $(MOCK_DEST_DIR)/mock_$$base_name.go ] || ! diff -q $(MOCK_DEST_DIR)/mock_$$base_name.go $(MOCK_DEST_DIR)/tmp/mock_$$base_name.go > /dev/null; then \
+		if [ ! -f internal/domain/mock_repository/mock_$$base_name.go ] || ! diff -q internal/domain/mock_repository/mock_$$base_name.go internal/domain/mock_repository/tmp/mock_$$base_name.go > /dev/null; then \
 			echo "Error: Mock file mock_$$base_name.go is not up to date. Please run 'make mock-gen'"; \
 			status=1; \
 		fi; \
 	done; \
-	rm -rf $(MOCK_DEST_DIR)/tmp; \
+	rm -rf internal/domain/mock_repository/tmp; \
 	if [ $$status -eq 1 ]; then \
 		exit 1; \
 	fi
